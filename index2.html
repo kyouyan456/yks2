@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オリジナルキャラ対戦バトル</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; user-select: none; }
+  body { background: #1a1a24; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
+  #app { width: 100%; max-width: 900px; background: #252634; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-height: 600px; position: relative; }
+  h1, h2, h3 { text-align: center; margin-bottom: 15px; color: #ffcc00; }
+  button { background: #4a4e69; color: #fff; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; }
+  button:hover { background: #6c5ce7; }
+  button:disabled { background: #444; color: #888; cursor: not-allowed; }
+  
+  /* Screens */
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .active { display: flex; }
+  
+  /* Select Screen */
+  .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; max-height: 300px; overflow-y: auto; padding: 5px; }
+  .char-card { background: #353646; border: 2px solid #4a4e69; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; }
+  .char-card.selected { border-color: #ffcc00; background: #4b4b60; }
+  .char-card h4 { margin-bottom: 5px; color: #00d2d3; }
+  
+  /* Battle Field */
+  .battle-field { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+  .battle-field.b-4p { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .fighter-box { background: #323344; border: 2px solid #555; border-radius: 8px; padding: 10px; position: relative; }
+  .fighter-box.active-turn { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+  .fighter-box.dead { opacity: 0.4; filter: grayscale(1); }
+  .stat-bar { height: 12px; background: #444; border-radius: 6px; overflow: hidden; margin: 4px 0; position: relative; }
+  .stat-fill { height: 100%; transition: width 0.3s; }
+  .hp-fill { background: #ff4757; }
+  .mental-fill { background: #1e90ff; }
+  .mp-fill { background: #2ed573; }
+  .bar-text { position: absolute; width: 100%; text-align: center; font-size: 9px; line-height: 12px; top: 0; color: #fff; font-weight: bold; text-shadow: 1px 1px 1px #000; }
+  
+  /* Command Area */
+  .cmd-area { background: #1e1f2b; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  
+  /* Log Area */
+  #battle-log { height: 120px; background: #11121a; border-radius: 6px; padding: 8px; overflow-y: auto; font-size: 12px; line-height: 1.4; color: #ddd; margin-top: 10px; border: 1px solid #333; }
+  
+  /* Tooltip Modal / Hover */
+  .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); border: 1px solid #ffcc00; color: #fff; padding: 8px; border-radius: 6px; font-size: 11px; z-index: 100; pointer-events: none; max-width: 200px; display: none; }
+  
+  /* Additional UI Buttons */
+  .battle-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .btn-danger { background: #d63031; }
+  .btn-danger:hover { background: #ff7675; }
+  .btn-success { background: #00b894; }
+  .btn-success:hover { background: #55efc4; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- タイトル画面 -->
+  <div id="sc-title" class="screen active">
+    <h1>キャラ対戦バトル</h1>
+    <div style="display:flex; flex-direction:column; gap:15px; width:250px; margin: auto;">
+      <button onclick="initMode('1v1')">タイマン (1vs1)</button>
+      <button onclick="initMode('3v3')">3vs3 交代制</button>
+      <button onclick="initMode('4p')">4人乱闘</button>
+      <button onclick="initOnline()">オンライン友人戦</button>
+    </div>
+  </div>
+
+  <!-- オンラインルーム画面 -->
+  <div id="sc-online" class="screen">
+    <h2>オンライン友人戦</h2>
+    <div style="margin:auto; text-align:center;">
+      <input type="text" id="room-code" placeholder="部屋番号(4桁)" maxlength="4" style="padding:8px; font-size:16px; text-align:center; width:120px;">
+      <br><br>
+      <button onclick="joinRoom()">部屋に入る / 作成</button>
+      <button onclick="showScreen('sc-title')">戻る</button>
+    </div>
+  </div>
+
+  <!-- キャラ選択画面 -->
+  <div id="sc-select" class="screen">
+    <h2 id="select-title">キャラクター選択</h2>
+    <div class="char-grid" id="char-selector"></div>
+    <div id="select-info" style="font-size:12px; background:#1e1f2b; padding:10px; border-radius:6px; min-height:80px; margin-bottom:10px;"></div>
+    <div style="display:flex; justify-content:space-between;">
+      <button onclick="showScreen('sc-title')">戻る</button>
+      <button id="btn-confirm-select" onclick="confirmSelection()">決定</button>
+    </div>
+  </div>
+
+  <!-- 戦闘画面 -->
+  <div id="sc-battle" class="screen">
+    <div class="battle-header">
+      <span id="battle-mode-label" style="font-weight:bold; color:#00d2d3;">対戦中</span>
+      <button class="btn-danger" onclick="quitBattle()">参戦辞退 (ホームへ戻る)</button>
+    </div>
+
+    <div id="battle-field" class="battle-field"></div>
+    
+    <div class="cmd-area">
+      <div id="cmd-header" style="font-size:14px; font-weight:bold; color:#ffcc00;">行動選択</div>
+      <div id="cmd-actions" class="btn-grid"></div>
+      <div id="cmd-targets" class="btn-grid" style="display:none;"></div>
+      <div id="cmd-bench" class="btn-grid" style="display:none;"></div>
+    </div>
+
+    <div id="battle-log"></div>
+
+    <!-- ゲーム終了時ナビゲーションUI -->
+    <div id="end-game-nav" style="display:none; margin-top:10px; gap:10px; justify-content:center;">
+      <button class="btn-success" onclick="retryBattle()">もう一度あそぶ</button>
+      <button onclick="backToCharSelect()">キャラ選択に戻る</button>
+      <button onclick="showScreen('sc-title')">ホームに戻る</button>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+// --- データベース定義 ---
+const SPECIES = {
+  BIBYUTSU: 'びびゅつか', YUREI: 'ゆうれいぶいん', HIBAKU: 'ひばくしゃ', ROUNIN: 'ろうにんせい',
+  KITSUEN: 'きつえんしゃ', UMADURA: 'うまづら', TANKI: 'たんきだいがく', ROUJIN: 'ろうじん',
+  ARUCHU: 'あるちゅう', ONGAKU: 'おんがくか', FRAN: 'fラン', MOJAMOJA: 'もじゃもじゃ',
+  DEBU: 'デブ', RUGBY: 'らぐびーぶ', FUTSU: 'ふつう', SHISOU: 'しそうか', ONNA: 'おんな'
+};
+
+const COMMON_SKILLS = [
+  { name: 'なぐる', mp: 0, pDmg: 5, mDmg: 0, desc: '通常物理攻撃(消費0)' },
+  { name: 'わるぐち', mp: 0, pDmg: 0, mDmg: 5, desc: '通常精神攻撃(消費0)' },
+  { name: 'わるだくみ', mp: 1, type: 'buff', desc: '次のターンの精神ダメ1.2倍' },
+  { name: 'やすむ', mp: 1, heal: 10, desc: 'HPと精神を10回復' },
+  { name: 'ぼうぎょ', mp: 0, type: 'def', desc: '受けるダメージ-10(先攻になり相手攻撃と同時発動)' }
+];
+
+const SKILL_DB = {
+  'れいしょう': { mp: 0, mDmg: 5, mpRec: 1, desc: '精神ダメ5, MP1回復', attr: [] },
+  'しんれいげんしょう': { mp: 2, mDmg: 15, desc: '精神ダメ15 (びっくり/心霊)', attr: ['しんれい'] },
+  'おえかき': { mp: 0, mDmg: 5, mpRec: 1, attr: ['いろ'], desc: '色属性 精神ダメ5, MP1回復' },
+  'べんきょう': { mp: 0, mpRec: 2, selfDmg: 5, desc: 'MP2回復, 自身HP&精神に5ダメ' },
+  'いんしゅ': { mp: 0, mpRec: 1, selfHp: -5, randMental: true, desc: 'MP+1, HP-5, 1/2で精神±5' },
+  'からて': { mp: 3, pDmg: 30, buffNextPhys: 1.2, desc: '物ダメ30, 次ターン物ダメ1.2倍' },
+  'おおごえ': { mp: 2, pDmg: 15, mDmg: 5, attr: ['おと'], desc: '音属性 物ダメ15, 精神ダメ5' },
+  'たどうしょう': { mp: 1, buffNextPhys: 1.1, desc: '次ターンの物ダメ1.1倍' },
+  'きつえん': { mp: 1, selfHp: -5, selfMen: 10, desc: 'HP-5, 精神+10' },
+  'ちーといつ': { mp: 1, multi: 7, baseDmg: 2, multiScale: 1.1, desc: '2ダメ×7回多段攻撃(1回毎1.1倍)' },
+  '投資': { mp: 0, reqMp: 1, gambleMp: true, desc: '成功でMP+5, 失敗でMP-5' },
+  'ギャンブル': { mp: 3, gambleDmg: 50, desc: '確率で50ダメージ' },
+  'サッカー': { mp: 1, pDmg: 10, desc: '物ダメ10' },
+  'えんそう': { mp: 0, debuffEnemyMen: 0.8, desc: '相手の精神攻撃力×0.8' },
+  'タックル': { mp: 2, pDmg: 30, selfDmg: 10, desc: '物ダメ30, 自身に10ダメ' },
+  'ラップ': { mp: 1, buffNextPhys: 1.1, desc: '次ターンの物ダメ1.1倍' },
+  'ガンダム': { mp: 8, unique: 'gundam', desc: '毎ターン終わりに全体物理10ダメのガンダム召喚' },
+  'みつぞうしゅ': { mp: 0, healHp: 20, desc: 'HP+20回復' },
+  'たけやまバズーカ': { mp: 2, pDmg: 20, priority: true, desc: '物ダメ20 (必ず先攻)' },
+  'ピカドンボイス': { mp: 4, pDmg: 50, mDmg: 10, selfDmg: 10, attr: ['おと'], desc: '音属性 物50,精神10,自分10ダメ' },
+  'ろうにんせいかつ': { mp: 1, healHp: 10, mpRec: 3, selfMenDmg: 5, desc: 'HP10回復, MP3回復, 精神5ダメ' },
+  'うわき': { mp: 3, mDmgOnFemale: 50, selfPhysRisk: 20, desc: '女種族に精神50ダメ, 確率で自分物20ダメ' },
+  'あばれうま': { mp: 0, unique: 'abareuma', desc: '3ターン操作不能・物理2倍, 自分にも0.5倍ダメ' },
+  'ペンキばくはつ': { mp: 3, attr: ['いろ'], mDmgAll: 50, pDmgAll: 5, desc: '色属性 全体精神50, 全体物5' },
+  'せいり': { mp: 5, unique: 'seiri', desc: '確率で相手HP/精神の片方または両方に35ダメ' },
+  'どくそう': { mp: -2, attr: ['おと'], mDmg: 20, pDmg: 10, desc: '音属性 精神20,物10, MP2消費' },
+  'まいご': { mp: 0, unique: 'maigo', desc: '物理完全回避, 確率で相手精神攻撃力1.2倍' },
+  'ついんぶらっく': { mp: 1, attr: ['いろ'], pDmg: 10, multi: 2, desc: '色属性 物10ダメ×2回' },
+  'きれる': { mp: 5, buffNextAll: 1.5, desc: '次ターンの物理・精神攻撃1.5倍' },
+  'ばとう': { mp: 3, dotMen: 5, desc: '相手を毎ターン精神5減少状態にする(6重化)' },
+  'からみつく': { mp: 2, debuffPriority: true, desc: '相手の先攻確率を1/5に低下させる' },
+  'だっぷん': { mp: 4, mDmgAll: 20, pDmgSingle: 20, desc: '全体精神20(自身込), 他1人に物20' },
+  'ねんてん': { mp: 1, selfDmg: 50, resistMen: 0.7, desc: '自身物理50ダメ, 以降精神ダメ0.7倍(4重可)' },
+  'バイトテロ': { mp: 3, pDmg: 10, mDmg: 10, doubleRoujin: true, desc: '物10,精神10 (老人には2倍)' },
+  'えんげき': { mp: 1, unique: 'engeki', desc: '必ず後攻になり相手と同じ技をやり返す' },
+  'いぬ': { mp: 0, selfStanceInu: true, desc: '物理ダメ半減, 自分精神10ダメ' },
+  'ゆかぺろ': { mp: 0, selfDmg: 10, buffNextPhys: 1.2, desc: '自分物理10ダメ, 次ターン物ダメ1.2倍' },
+  'けんびきょう': { mp: 0, absorbMp: 1, desc: '相手のMPを1吸収' },
+  'おちゃたて': { mp: 0, healMen: 10, desc: '精神10回復' },
+  'すいみんぐ': { mp: 4, unique: 'swimming', desc: '1ターン潜航し次ターン後攻で物ダメ40' },
+  'かいご': { mp: 2, healMen: 30, desc: '精神30回復' },
+  'たたきおこす': { mp: 3, pDmg: 40, giveMp: 2, desc: '物ダメ40, 相手のMP2回復' }
+};
+
+const CHARACTERS = [
+  {
+    id: 'kk', name: 'KK', hp: 70, mental: 110, mp: 10,
+    species: [SPECIES.BIBYUTSU, SPECIES.YUREI],
+    traits: ['しきもう', 'ふきんしん', 'なぞのこうい', 'じーぴーえー', 'うんどうおんち'],
+    special: ['ガンダム', 'みつぞうしゅ', 'たけやまバズーカ'],
+    moves: ['れいしょう', 'わるだくみ', 'しんれいげんしょう', 'おえかき', 'べんきょう', 'いんしゅ']
+  },
+  {
+    id: 'asato', name: 'あさと', hp: 120, mental: 80, mp: 8,
+    species: [SPECIES.HIBAKU, SPECIES.ROUNIN],
+    traits: ['おおごえ', '無神経', 'むげん成長', 'ぼうず', 'びびり', 'まゆなし'],
+    special: ['ピカドンボイス', 'ろうにんせいかつ'],
+    moves: ['からて', 'おおごえ', 'れいしょう', 'たどうしょう', 'べんきょう']
+  },
+  {
+    id: 'ui', name: 'うい', hp: 110, mental: 110, mp: 9,
+    species: [SPECIES.KITSUEN],
+    traits: ['うわきしょう', 'だんそんじょひ', 'れいしょうけい'],
+    special: ['うわき'],
+    moves: ['おおごえ', 'やすむ', 'からて', 'れいしょう', 'たどうしょう', 'べんきょう', 'きつえん', 'いんしゅ', 'わるだくみ', 'ちーといつ']
+  },
+  {
+    id: 'mimaya', name: 'みまや', hp: 115, mental: 95, mp: 8,
+    species: [SPECIES.UMADURA, SPECIES.KITSUEN, SPECIES.TANKI],
+    traits: ['うわきしょう', 'ギャンブラー', 'えんきんほう', 'めめしい'],
+    special: ['あばれうま'],
+    moves: ['たどうしょう', 'おおごえ', 'きつえん', 'いんしゅ', '投資', 'ギャンブル']
+  },
+  {
+    id: 'yuma', name: 'ゆうま', hp: 110, mental: 100, mp: 7,
+    species: [SPECIES.ROUJIN, SPECIES.ARUCHU],
+    traits: ['ボケ', 'ギャンブラー', 'しらが', 'あかいろ', 'むしば', 'あるつはいまー'],
+    special: ['ペンキばくはつ', 'せいり'],
+    moves: ['いんしゅ', '投資', 'ギャンブル', 'べんきょう', 'おえかき', 'サッカー']
+  },
+  {
+    id: 'rentaro', name: 'れんたろう', hp: 110, mental: 90, mp: 6,
+    species: [SPECIES.ONGAKU, SPECIES.FRAN],
+    traits: ['わがまま', 'おやのななひかり', 'くろいろ', 'じゅんあい'],
+    special: ['どくそう', 'まいご', 'ついんぶらっく'],
+    moves: ['たどうしょう', 'おおごえ', 'サッカー', 'えんそう']
+  },
+  {
+    id: 'massu', name: 'まっすー', hp: 90, mental: 90, mp: 9,
+    species: [SPECIES.MOJAMOJA],
+    traits: ['どくぜつ', 'びびり', 'ちゅうそつのいでんし', 'にじゅうじんかく'],
+    special: ['きれる', 'ばとう', 'からみつく'],
+    moves: ['れいしょう', 'べんきょう', 'ギャンブル']
+  },
+  {
+    id: 'masaya', name: 'まさや', hp: 100, mental: 110, mp: 5,
+    species: [SPECIES.DEBU, SPECIES.RUGBY],
+    traits: ['ごうまん', 'かりめん', 'あくしゅう', 'きょたい'],
+    special: ['だっぷん', 'ねんてん', 'バイトテロ'],
+    moves: ['タックル', 'べんきょう', 'ギャンブル', 'いんしゅ', 'サッカー', 'ラップ']
+  },
+  {
+    id: 'satokei', name: 'さとけい', hp: 100, mental: 100, mp: 8,
+    species: [SPECIES.FUTSU],
+    traits: ['いぬけい', 'じんだいのかこい'],
+    special: ['えんげき', 'いぬ'],
+    moves: ['おおごえ', 'サッカー', 'べんきょう', 'ちーといつ', 'れいしょう']
+  },
+  {
+    id: 'miyabi', name: 'みやび', hp: 70, mental: 110, mp: 6,
+    species: [SPECIES.SHISOU],
+    traits: ['じゅんあい', 'うんどうおんち', 'できん', 'どくぜつ', 'だんそんじょひ', 'きけんしそう'],
+    special: ['ゆかぺろ', 'けんびきょう', 'おちゃたて'],
+    moves: ['べんきょう', '投資', 'ラップ', 'れいしょう', 'わるだくみ', 'タックル']
+  },
+  {
+    id: 'mucchan', name: 'むっちゃん', hp: 120, mental: 110, mp: 6,
+    species: [SPECIES.ONNA, SPECIES.DEBU, SPECIES.BIBYUTSU],
+    traits: ['じあいのこころ', 'きょたい', 'ごうまん', 'ユーチューバー'],
+    special: ['すいみんぐ', 'かいご', 'たたきおこす'],
+    moves: ['タックル', 'おえかき', 'おおごえ', 'べんきょう', 'しんれいげんしょう']
+  }
+];
+
+// --- ゲーム状態管理 ---
+let gameState = {
+  mode: '1v1',
+  players: [],
+  turn: 1,
+  pendingActions: {},
+  activePlayerIndex: 0
+};
+
+// --- 画面遷移 ---
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let selectedChars = [];
+let maxSelect = 1;
+
+function initMode(mode) {
+  gameState.mode = mode;
+  selectedChars = [];
+  if (mode === '1v1') maxSelect = 1;
+  else if (mode === '3v3') maxSelect = 3;
+  else if (mode === '4p') maxSelect = 1;
+  
+  document.getElementById('select-title').innerText = `キャラクター選択 (${selectedChars.length}/${maxSelect})`;
+  renderCharSelector();
+  showScreen('sc-select');
+}
+
+function initOnline() {
+  showScreen('sc-online');
+}
+
+function joinRoom() {
+  const code = document.getElementById('room-code').value;
+  if (code.length === 4) {
+    alert(`部屋 ${code} に接続しました（オンライン用ダミー）`);
+    initMode('1v1');
+  } else {
+    alert('4桁の部屋番号を入力してください');
+  }
+}
+
+function renderCharSelector() {
+  const grid = document.getElementById('char-selector');
+  grid.innerHTML = '';
+  CHARACTERS.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'char-card' + (selectedChars.includes(c.id) ? ' selected' : '');
+    card.innerHTML = `<h4>${c.name}</h4><div style="font-size:10px;">HP:${c.hp} MP:${c.mp}</div>`;
+    card.onclick = () => selectChar(c.id);
+    card.onmouseenter = (e) => showTooltip(e, getCharInfoHtml(c));
+    card.onmouseleave = hideTooltip;
+    grid.appendChild(card);
+  });
+}
+
+function selectChar(id) {
+  if (selectedChars.includes(id)) {
+    selectedChars = selectedChars.filter(i => i !== id);
+  } else {
+    if (selectedChars.length < maxSelect) {
+      selectedChars.push(id);
+    }
+  }
+  document.getElementById('select-title').innerText = `キャラクター選択 (${selectedChars.length}/${maxSelect})`;
+  renderCharSelector();
+  
+  const lastSelected = CHARACTERS.find(c => c.id === selectedChars[selectedChars.length - 1]);
+  document.getElementById('select-info').innerHTML = lastSelected ? getCharInfoHtml(lastSelected) : 'キャラを選択してください';
+}
+
+function getCharInfoHtml(c) {
+  return `<b>${c.name}</b> [${c.species.join(', ')}]<br>
+    HP:${c.hp} メンタル:${c.mental} MP:${c.mp}<br>
+    <b>特性:</b> ${c.traits.join(', ')}<br>
+    <b>専用技:</b> ${c.special.join(', ')}`;
+}
+
+function confirmSelection() {
+  if (selectedChars.length < maxSelect) {
+    alert(`あと ${maxSelect - selectedChars.length} キャラ選択してください`);
+    return;
+  }
+  setupBattle();
+}
+
+// --- リセット・対戦離脱処理 ---
+function quitBattle() {
+  if (confirm("対戦を中断してホームに戻りますか？")) {
+    showScreen('sc-title');
+  }
+}
+
+function retryBattle() {
+  setupBattle();
+}
+
+function backToCharSelect() {
+  initMode(gameState.mode);
+}
+
+// --- 戦闘セットアップ ---
+function createFighterState(charId, pName) {
+  const template = CHARACTERS.find(c => c.id === charId);
+  return {
+    pName: pName,
+    id: template.id,
+    name: template.name,
+    maxHp: template.hp,
+    hp: template.hp,
+    maxMen: template.mental,
+    men: template.mental,
+    maxMp: template.mp,
+    mp: template.mp,
+    species: [...template.species],
+    traits: [...template.traits],
+    moves: [...COMMON_SKILLS, ...template.special.map(s => ({ name: s, ...SKILL_DB[s] })), ...template.moves.map(s => ({ name: s, ...SKILL_DB[s] }))],
+    buffs: { physMul: 1, menMul: 1, nextPhysMul: 1, nextMenMul: 1, nextAllMul: 1, resistMenMul: 1 },
+    states: { batouCount: 0, gundam: false, swimming: 0, abareuma: 0, inu: false, maigo: false },
+    isDead: false
+  };
+}
+
+function setupBattle() {
+  gameState.players = [];
+  gameState.turn = 1;
+
+  document.getElementById('end-game-nav').style.display = 'none';
+  document.querySelector('.cmd-area').style.display = 'flex';
+  document.getElementById('battle-log').innerHTML = '';
+  
+  if (gameState.mode === '1v1') {
+    gameState.players.push({ id: 0, active: createFighterState(selectedChars[0], 'P1'), bench: [] });
+    const cpChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)].id;
+    gameState.players.push({ id: 1, active: createFighterState(cpChar, 'CP'), bench: [], isCp: true });
+  } else if (gameState.mode === '3v3') {
+    const p1Active = createFighterState(selectedChars[0], 'P1');
+    const p1Bench = [createFighterState(selectedChars[1], 'P1'), createFighterState(selectedChars[2], 'P1')];
+    gameState.players.push({ id: 0, active: p1Active, bench: p1Bench });
+
+    const shuffled = [...CHARACTERS].sort(() => 0.5 - Math.random());
+    const cpActive = createFighterState(shuffled[0].id, 'CP');
+    const cpBench = [createFighterState(shuffled[1].id, 'CP'), createFighterState(shuffled[2].id, 'CP')];
+    gameState.players.push({ id: 1, active: cpActive, bench: cpBench, isCp: true });
+  } else if (gameState.mode === '4p') {
+    gameState.players.push({ id: 0, active: createFighterState(selectedChars[0], 'P1'), bench: [] });
+    for (let i = 1; i < 4; i++) {
+      const cpChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)].id;
+      gameState.players.push({ id: i, active: createFighterState(cpChar, `CP${i}`), bench: [], isCp: true });
+    }
+  }
+
+  showScreen('sc-battle');
+  log("=== バトル開始 ===");
+  startTurn();
+}
+
+// --- ターンの進行 ---
+function startTurn() {
+  log(`--- ターン ${gameState.turn} ---`);
+  
+  gameState.players.forEach(p => {
+    const f = p.active;
+    if (f.isDead) return;
+
+    let mpRec = 1;
+    if (f.traits.includes('じーぴーえー')) mpRec += 1;
+    f.mp = Math.min(f.maxMp, f.mp + mpRec);
+
+    if (f.traits.includes('むげん成長')) {
+      f.maxHp = Math.round(f.maxHp * 1.1);
+      f.maxMen = Math.round(f.maxMen * 1.1);
+      if (gameState.turn % 2 === 0) f.maxMp += 1;
+    }
+
+    if (f.traits.includes('むしば')) {
+      f.hp -= 2; f.men -= 2;
+      log(`${f.name}はむしばの痛みに耐えている(HP-2, 精神-2)`);
+    }
+
+    if (f.traits.includes('じあいのこころ')) f.men = Math.min(f.maxMen, f.men + 5);
+    if (f.traits.includes('ちゅうそつのいでんし') && Math.random() < 0.5) f.hp = Math.min(f.maxHp, f.hp + 5);
+
+    if (f.traits.includes('あくしゅう')) {
+      gameState.players.forEach(op => {
+        if (!op.active.isDead) op.active.men -= 2;
+      });
+    }
+
+    if (f.traits.includes('うわきしょう')) {
+      let femaleCount = 0;
+      gameState.players.forEach(op => {
+        if (op !== p && op.active.species.includes(SPECIES.ONNA)) femaleCount++;
+      });
+      if (femaleCount > 0) {
+        f.mp = Math.min(f.maxMp, f.mp + femaleCount);
+        if (Math.random() < 0.5) {
+          if (Math.random() < 0.5) f.hp -= femaleCount * 5; else f.men -= femaleCount * 5;
+          log(`${f.name}は浮気性が祟ってダメージを受けた！`);
+        }
+      }
+    }
+
+    if (f.states.batouCount > 0) {
+      const d = f.states.batouCount * 5;
+      f.men -= d;
+      log(`${f.name}は罵倒により精神に ${d} ダメージ！`);
+    }
+
+    checkDeath(f);
+  });
+
+  gameState.pendingActions = {};
+  promptPlayerAction(0);
+}
+
+function promptPlayerAction(pIndex) {
+  if (pIndex >= gameState.players.length) {
+    resolveTurn();
+    return;
+  }
+
+  const p = gameState.players[pIndex];
+  if (p.active.isDead) {
+    promptPlayerAction(pIndex + 1);
+    return;
+  }
+
+  if (p.isCp) {
+    const validMoves = p.active.moves.filter(m => (m.mp || 0) <= p.active.mp);
+    const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+    const targets = gameState.players.filter(tp => tp !== p && !tp.active.isDead);
+    const target = targets[Math.floor(Math.random() * targets.length)];
+
+    gameState.pendingActions[p.id] = { actor: p, move: move, target: target };
+    promptPlayerAction(pIndex + 1);
+  } else {
+    gameState.activePlayerIndex = pIndex;
+    renderBattleScreen();
+    renderCommandUI(p);
+  }
+}
+
+function selectPlayerMove(move) {
+  const p = gameState.players[gameState.activePlayerIndex];
+  const enemies = gameState.players.filter(tp => tp !== p && !tp.active.isDead);
+  if (enemies.length === 1) {
+    gameState.pendingActions[p.id] = { actor: p, move: move, target: enemies[0] };
+    promptPlayerAction(gameState.activePlayerIndex + 1);
+  } else {
+    renderTargetUI(move, enemies);
+  }
+}
+
+function selectTarget(move, target) {
+  const p = gameState.players[gameState.activePlayerIndex];
+  gameState.pendingActions[p.id] = { actor: p, move: move, target: target };
+  promptPlayerAction(gameState.activePlayerIndex + 1);
+}
+
+// --- ターン解決 ---
+function resolveTurn() {
+  let actions = Object.values(gameState.pendingActions);
+
+  actions.sort((a, b) => {
+    if (a.move.type === 'def' && b.move.type !== 'def') return -1;
+    if (b.move.type === 'def' && a.move.type !== 'def') return 1;
+
+    if (a.move.priority && !b.move.priority) return -1;
+    if (b.move.priority && !a.move.priority) return 1;
+
+    let aPrio = getPriorityScore(a.actor.active, b.actor.active);
+    let bPrio = getPriorityScore(b.actor.active, a.actor.active);
+    if (aPrio !== bPrio) return bPrio - aPrio;
+
+    return Math.random() - 0.5;
+  });
+
+  actions.forEach(act => {
+    if (act.actor.active.isDead) return;
+    executeMove(act.actor, act.move, act.target);
+  });
+
+  gameState.players.forEach(p => {
+    const f = p.active;
+    if (f.isDead) return;
+    if (f.states.gundam) {
+      log(`ガンダムの全体攻撃！`);
+      gameState.players.forEach(op => {
+        if (op !== p && !op.active.isDead) {
+          applyDamage(op.active, 10, 0, []);
+        }
+      });
+    }
+  });
+
+  let battleEnded = checkBattleEnd();
+  if (!battleEnded) {
+    gameState.turn++;
+    startTurn();
+  }
+}
+
+function getPriorityScore(f, targetF) {
+  let score = 0;
+  if (f.traits.includes('だんそんじょひ') && targetF.species.includes(SPECIES.ONNA)) score += 10;
+  if (f.traits.includes('ごうまん')) score += 5;
+  if (f.states.karamitsuku) score -= 3;
+  return score;
+}
+
+// --- 技の実行と計算 ---
+function executeMove(actorP, move, targetP) {
+  const f = actorP.active;
+  const target = targetP ? targetP.active : null;
+
+  let mpCost = move.mp || 0;
+  if (f.traits.includes('どくぜつ') && mpCost > 0) mpCost = Math.max(0, mpCost - 1);
+  if (f.mp < mpCost) {
+    log(`${f.name}はMPが足りなくて ${move.name} が使えなかった！`);
+    return;
+  }
+  f.mp -= mpCost;
+
+  log(`${f.name}の ${move.name}！`);
+
+  if (f.traits.includes('できん')) {
+    if (Math.random() < 0.3) {
+      log(`${f.name}は出禁のため行動できなかった！`);
+      f.buffs.menMul *= 1.1;
+      return;
+    }
+  }
+
+  if (move.unique === 'engeki') {
+    let lastEnemyAction = gameState.pendingActions[targetP.id];
+    if (lastEnemyAction && lastEnemyAction.move) {
+      log(`${f.name}は演劇で ${lastEnemyAction.move.name} をコピーした！`);
+      executeMove(actorP, lastEnemyAction.move, targetP);
+    }
+    return;
+  }
+
+  if (move.type === 'def') {
+    log(`${f.name}は身構えている！(被ダメージ -10)`);
+    f.isDefending = true;
+    return;
+  }
+
+  if (move.heal) {
+    f.hp = Math.min(f.maxHp, f.hp + move.heal);
+    f.men = Math.min(f.maxMen, f.men + move.heal);
+  }
+  if (move.healHp) f.hp = Math.min(f.maxHp, f.hp + move.healHp);
+  if (move.healMen) f.men = Math.min(f.maxMen, f.men + move.healMen);
+  if (move.mpRec) f.mp = Math.min(f.maxMp, f.mp + move.mpRec);
+  if (move.selfDmg) f.hp -= move.selfDmg;
+  if (move.selfMenDmg) f.men -= move.selfMenDmg;
+
+  if (move.type === 'buff' || move.buffNextPhys || move.buffNextMen || move.buffNextAll) {
+    if (move.buffNextPhys) f.buffs.nextPhysMul *= move.buffNextPhys;
+    if (move.name === 'わるだくみ') f.buffs.nextMenMul *= 1.2;
+    if (move.buffNextAll) { f.buffs.nextPhysMul *= move.buffNextAll; f.buffs.nextMenMul *= move.buffNextAll; }
+  }
+
+  if (move.unique === 'gundam') f.states.gundam = true;
+  if (move.unique === 'abareuma') f.states.abareuma = 3;
+  if (move.dotMen) target.states.batouCount = Math.min(6, target.states.batouCount + 1);
+  if (move.debuffPriority) target.states.karamitsuku = true;
+
+  let baseP = move.pDmg || 0;
+  let baseM = move.mDmg || 0;
+
+  if (move.multi) {
+    let currentMultiplier = 1.0;
+    for (let i = 0; i < move.multi; i++) {
+      let pD = Math.round(move.baseDmg * currentMultiplier);
+      applyDamage(target, pD, 0, move.attr || []);
+      if (move.multiScale) currentMultiplier *= move.multiScale;
+    }
+    return;
+  }
+
+  if (baseP > 0 || baseM > 0 || move.gambleDmg || move.attr) {
+    if (move.gambleDmg) {
+      let success = Math.random() < 0.5;
+      if (f.traits.includes('ギャンブラー')) success = Math.random() < 0.7;
+      if (success) {
+        let mult = f.traits.includes('ギャンブラー') ? 1.5 : 1.0;
+        baseP = Math.round(move.gambleDmg * mult);
+      } else {
+        log(`ギャンブル失敗！`);
+        if (f.traits.includes('ギャンブラー')) f.mp = Math.max(0, f.mp - 5);
+        return;
+      }
+    }
+
+    let pMul = f.buffs.physMul * f.buffs.nextPhysMul;
+    let mMul = f.buffs.menMul * f.buffs.nextMenMul;
+
+    if (f.traits.includes('うんどうおんち')) pMul *= 0.7;
+    if (f.traits.includes('ふきんしん')) mMul *= 1.3;
+    if (f.traits.includes('おおごえ') && (move.attr && move.attr.includes('おと'))) { pMul *= 1.5; mMul *= 1.5; }
+    if (f.traits.includes('ぼうず')) mMul *= 0.75;
+    if (f.traits.includes('れいしょうけい')) mMul *= 1.1;
+    if (f.traits.includes('どくぜつ')) {
+      if (target && target.species.some(s => [SPECIES.FRAN, SPECIES.ROUNIN, SPECIES.TANKI].includes(s))) {
+        mMul *= 1.5;
+      } else {
+        mMul *= 1.1;
+      }
+    }
+    if (f.traits.includes('きけんしそう')) {
+      let m = 1.1;
+      if (target && target.species.includes(SPECIES.MOJAMOJA)) m = 1.2;
+      if (target && target.species.includes(SPECIES.DEBU)) m = 1.4;
+      pMul *= m;
+    }
+    if (f.traits.includes('じゅんあい') && target && target.traits.includes('うわきしょう')) {
+      pMul *= 1.2; mMul *= 1.2;
+    }
+
+    let finalP = Math.round(baseP * pMul);
+    let finalM = Math.round(baseM * mMul);
+
+    if (target) {
+      if (target.traits.includes('おやのななひかり') && Math.random() < 0.3 && finalP > 0) {
+        log(`${target.name}は親の七光りで回避した！`);
+        return;
+      }
+      if (target.traits.includes('えんきんほう') && Math.random() < 0.25 && finalP > 0) {
+        log(`${target.name}は遠近法で物理攻撃を回避した！`);
+        return;
+      }
+    }
+
+    if (move.mDmgAll || move.pDmgAll) {
+      gameState.players.forEach(op => {
+        if (op !== actorP && !op.active.isDead) {
+          applyDamage(op.active, move.pDmgAll || 0, move.mDmgAll || 0, move.attr || []);
+        }
+      });
+    } else if (target) {
+      applyDamage(target, finalP, finalM, move.attr || []);
+    }
+  }
+
+  f.buffs.nextPhysMul = 1.0;
+  f.buffs.nextMenMul = 1.0;
+}
+
+function applyDamage(target, pDmg, mDmg, attrs) {
+  if (attrs.includes('いろ')) {
+    if (target.traits.includes('しきもう')) { pDmg = 0; mDmg = 0; log(`${target.name}は色覚障害のため色攻撃が効かない！`); }
+    if (target.traits.includes('ボケ')) { pDmg *= 0.75; mDmg *= 0.75; }
+    if (target.traits.includes('しらが')) pDmg *= 0.8;
+    if (target.traits.includes('くろいろ')) {
+      pDmg *= 1.5;
+      log(`${target.name}は色攻撃に反撃した！`);
+    }
+  }
+
+  if (target.traits.includes('無神経')) pDmg *= 0.8;
+  if (target.traits.includes('わがまま')) {
+    mDmg *= 0.5;
+    if (Math.random() < 0.2) pDmg += 20;
+  }
+  if (target.traits.includes('めめしい')) mDmg *= 1.2;
+
+  if (target.isDefending) {
+    pDmg = Math.max(0, pDmg - 10);
+    mDmg = Math.max(0, mDmg - 10);
+  }
+
+  pDmg = Math.round(pDmg);
+  mDmg = Math.round(mDmg);
+
+  target.hp -= pDmg;
+  target.men -= mDmg;
+
+  if (pDmg > 0 || mDmg > 0) {
+    log(`${target.name}に 物理:${pDmg} / 精神:${mDmg} のダメージ！`);
+  }
+
+  checkDeath(target);
+}
+
+function checkDeath(f) {
+  if (f.hp <= 0 || f.men <= 0) {
+    if (!f.isDead) {
+      f.isDead = true;
+      log(`<b>${f.name} は倒れた！</b>`);
+      f.states.gundam = false;
+    }
+  }
+}
+
+function checkBattleEnd() {
+  let alivePlayers = gameState.players.filter(p => !p.active.isDead || p.bench.some(b => !b.isDead));
+  if (alivePlayers.length <= 1) {
+    let winner = alivePlayers[0] ? alivePlayers[0].active.name : 'なし';
+    log(`<h3>ゲーム終了！ 勝者: ${winner}</h3>`);
+    
+    // コマンドエリアを非表示にし、終了時ナビボタンを表示
+    document.querySelector('.cmd-area').style.display = 'none';
+    document.getElementById('end-game-nav').style.display = 'flex';
+    return true;
+  }
+  return false;
+}
+
+// --- UIレンダリング ---
+function renderBattleScreen() {
+  const container = document.getElementById('battle-field');
+  container.className = 'battle-field' + (gameState.mode === '4p' ? ' b-4p' : '');
+  container.innerHTML = '';
+
+  gameState.players.forEach((p, idx) => {
+    const f = p.active;
+    const box = document.createElement('div');
+    box.className = `fighter-box ${f.isDead ? 'dead' : ''} ${idx === gameState.activePlayerIndex ? 'active-turn' : ''}`;
+    
+    box.innerHTML = `
+      <div style="font-weight:bold; font-size:12px;">[${p.pName}] ${f.name}</div>
+      <div class="stat-bar"><div class="stat-fill hp-fill" style="width:${Math.max(0, (f.hp/f.maxHp)*100)}%"></div><span class="bar-text">HP: ${f.hp}/${f.maxHp}</span></div>
+      <div class="stat-bar"><div class="stat-fill mental-fill" style="width:${Math.max(0, (f.men/f.maxMen)*100)}%"></div><span class="bar-text">精神: ${f.men}/${f.maxMen}</span></div>
+      <div class="stat-bar"><div class="stat-fill mp-fill" style="width:${Math.max(0, (f.mp/f.maxMp)*100)}%"></div><span class="bar-text">MP: ${f.mp}/${f.maxMp}</span></div>
+    `;
+    box.onmouseenter = (e) => showTooltip(e, getCharInfoHtml(f));
+    box.onmouseleave = hideTooltip;
+    container.appendChild(box);
+  });
+}
+
+function renderCommandUI(p) {
+  const actionsDiv = document.getElementById('cmd-actions');
+  const targetsDiv = document.getElementById('cmd-targets');
+  const benchDiv = document.getElementById('cmd-bench');
+  
+  actionsDiv.style.display = 'grid';
+  targetsDiv.style.display = 'none';
+  benchDiv.style.display = 'none';
+  
+  actionsDiv.innerHTML = '';
+  document.getElementById('cmd-header').innerText = `${p.active.name} の行動を選択`;
+
+  p.active.moves.forEach(m => {
+    const btn = document.createElement('button');
+    btn.innerText = `${m.name} (${m.mp || 0})`;
+    btn.disabled = (m.mp || 0) > p.active.mp;
+    btn.onclick = () => selectPlayerMove(m);
+    btn.onmouseenter = (e) => showTooltip(e, `<b>${m.name}</b><br>${m.desc || '技の詳細'}`);
+    btn.onmouseleave = hideTooltip;
+    actionsDiv.appendChild(btn);
+  });
+
+  if (gameState.mode === '3v3' && p.bench.some(b => !b.isDead)) {
+    const switchBtn = document.createElement('button');
+    switchBtn.style.background = '#e17055';
+    switchBtn.innerText = '交代する';
+    switchBtn.onclick = () => renderBenchUI(p);
+    actionsDiv.appendChild(switchBtn);
+  }
+}
+
+function renderTargetUI(move, enemies) {
+  const actionsDiv = document.getElementById('cmd-actions');
+  const targetsDiv = document.getElementById('cmd-targets');
+  actionsDiv.style.display = 'none';
+  targetsDiv.style.display = 'grid';
+  targetsDiv.innerHTML = '';
+
+  document.getElementById('cmd-header').innerText = `ターゲットを選択`;
+
+  enemies.forEach(ep => {
+    const btn = document.createElement('button');
+    btn.innerText = ep.active.name;
+    btn.onclick = () => selectTarget(move, ep);
+    targetsDiv.appendChild(btn);
+  });
+}
+
+function renderBenchUI(p) {
+  const actionsDiv = document.getElementById('cmd-actions');
+  const benchDiv = document.getElementById('cmd-bench');
+  actionsDiv.style.display = 'none';
+  benchDiv.style.display = 'grid';
+  benchDiv.innerHTML = '';
+
+  document.getElementById('cmd-header').innerText = `交代するキャラを選択 (1ターン消費)`;
+
+  p.bench.forEach((b, idx) => {
+    if (!b.isDead) {
+      const btn = document.createElement('button');
+      btn.innerText = `${b.name} (HP:${b.hp})`;
+      btn.onclick = () => {
+        const temp = p.active;
+        p.active = b;
+        p.bench[idx] = temp;
+        log(`${p.pName}は ${b.name} に交代した！`);
+        promptPlayerAction(gameState.activePlayerIndex + 1);
+      };
+      benchDiv.appendChild(btn);
+    }
+  });
+}
+
+function log(msg) {
+  const l = document.getElementById('battle-log');
+  l.innerHTML += `<div>${msg}</div>`;
+  l.scrollTop = l.scrollHeight;
+}
+
+// Tooltip Management
+function showTooltip(e, html) {
+  const tt = document.getElementById('tooltip');
+  tt.innerHTML = html;
+  tt.style.display = 'block';
+  tt.style.left = e.pageX + 10 + 'px';
+  tt.style.top = e.pageY + 10 + 'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+</script>
+</body>
+</html>
