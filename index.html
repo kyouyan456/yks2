@@ -1,892 +1,7415 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>オリジナルキャラ対戦バトル</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>妖怪ウォッチ2 覇道</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; user-select: none; }
-  body { background: #1a1a24; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
-  #app { width: 100%; max-width: 900px; background: #252634; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-height: 600px; position: relative; }
-  h1, h2, h3 { text-align: center; margin-bottom: 15px; color: #ffcc00; }
-  button { background: #4a4e69; color: #fff; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; }
-  button:hover { background: #6c5ce7; }
-  button:disabled { background: #444; color: #888; cursor: not-allowed; }
+:root{
+  --bg:#10131a;--panel:#1b2030;--panel2:#242b3d;--text:#f4f7fb;--muted:#aeb7c7;--accent:#6fd3ff;--danger:#ff6b7a;--good:#77e08f;--gold:#ffd76f;
+}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#1b2337,#0d1016 55%);color:var(--text);min-height:100vh}
+button,select,input{font:inherit}.app{max-width:1180px;margin:auto;padding:18px}.screen{display:none}.screen.active{display:block}.card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+h1,h2,h3{margin:.2em 0 .65em}.grid{display:grid;gap:14px}.home-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.btn{border:0;border-radius:13px;padding:12px 15px;background:#2e3850;color:#fff;cursor:pointer;transition:.15s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}.btn:hover{transform:translateY(-1px);background:#3a4663}.btn.primary{background:#267ea2}.btn.danger{background:#8b3340}.btn.good{background:#2d7a47}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}.small{font-size:.9rem;color:var(--muted)}
+.character-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.character{position:relative;cursor:pointer;min-height:185px}.character.selected{outline:3px solid var(--accent)}.tag{display:inline-block;padding:2px 7px;border-radius:99px;background:#30384a;margin:2px;font-size:.78rem;color:#dce5f4}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}.stat{background:#111725;border-radius:10px;padding:7px;text-align:center}.tooltip{position:fixed;z-index:20;max-width:360px;background:#06080d;border:1px solid rgba(255,255,255,.2);padding:12px;border-radius:12px;display:none;white-space:pre-wrap;font-size:.9rem;box-shadow:0 15px 40px rgba(0,0,0,.5)}
+.battle-top{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}.fighters{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}.fighter{background:#171d2a;border-radius:18px;padding:14px;border:1px solid rgba(255,255,255,.1)}.fighter.enemy{transform-origin:center}.name{font-size:1.2rem;font-weight:700}.bar{height:16px;background:#0a0d12;border-radius:99px;overflow:hidden;margin:4px 0 8px}.fill{height:100%;transition:width .35s}.hp{background:linear-gradient(90deg,#30bd66,#80e59c)}.mental{background:linear-gradient(90deg,#8d64e8,#c695ff)}.mp{background:linear-gradient(90deg,#3d9cdb,#77d0ff)}.moves{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px;margin-top:14px}.move-section{
+  width:100%;
+  margin-top:14px;
+}
+
+.move-section-title{
+  font-weight:800;
+  margin:6px 0 8px;
+  padding:6px 10px;
+  border-radius:9px;
+  font-size:.95rem;
+}
+
+.move-section-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:9px;
+}
+
+/* =========================
+   キャラ選択アイコン
+========================= */
+
+.select-character-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.select-character-head h3{
+  margin:0;
+}
+
+.select-character-icon,
+.select-character-icon-placeholder{
+  width:72px;
+  height:72px;
+
+  flex-shrink:0;
+
+  object-fit:cover;
+
+  border-radius:14px;
+
+  border:2px solid
+    rgba(255,255,255,.35);
+
+  background:#283247;
+}
+
+.select-character-icon-placeholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  font-size:.7rem;
+  color:#dce5f4;
+}
+
+/* 専用技 */
+.move-section-title.unique{
+  background:#5b294f;
+  color:#ffd8f2;
+}
+
+.move.unique{
+  background:#65315a;
+}
+
+.move.unique:hover{
+  background:#7b3d6e;
+}
+
+/* 使える技 */
+.move-section-title.usable{
+  background:#304a72;
+  color:#d8e9ff;
+}
+
+.move.usable{
+  background:#31527f;
+}
+
+.move.usable:hover{
+  background:#3b6399;
+}
+
+/* 共通コマンド */
+.move-section-title.common{
+  background:#36553c;
+  color:#ddffe4;
+}
+
+.move.common{
+  background:#376443;
+}
+
+.move.common:hover{
+  background:#447b52;
+}.move{min-height:64px;text-align:left}.log{height:260px;overflow:auto;background:#090c12;border-radius:14px;padding:12px;font-size:.94rem;line-height:1.5}.flash{animation:flash .35s}.shake{animation:shake .28s}.heal{animation:heal .55s}@keyframes flash{50%{filter:brightness(2)}}@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}}@keyframes heal{50%{box-shadow:0 0 25px #6dff9c}}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.spacer{height:8px}.hidden{display:none!important}.result{font-size:1.5rem;font-weight:800;text-align:center;padding:18px}.room{font-size:2rem;letter-spacing:.25em;font-weight:800;color:var(--gold)}
+@media(max-width:700px){.fighters{grid-template-columns:1fr}.log{height:190px}.app{padding:10px}.moves{grid-template-columns:1fr 1fr}.btn{padding:11px}.character-grid{grid-template-columns:1fr 1fr}.character{min-height:160px}.small{font-size:.82rem}}
+/* =========================
+   新戦闘画面
+========================= */
+
+.battle-stage{
+  position:relative;
+  width:100%;
+
+  border-radius:18px;
+  overflow:visible;
+
+  background:#10131a;
+
+  border:1px solid
+    rgba(255,255,255,.15);
+
+  box-shadow:
+    0 16px 40px
+    rgba(0,0,0,.35);
+}
+
+.battle-view{
+  position:relative;
+  width:100%;
+
+  /* 1536×1024と同じ3:2 */
+  aspect-ratio:3 / 2;
+
+  overflow:visible;
+  padding:12px;
+
+  background-color:#78848b;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+
+  /* HUDを上下にはみ出させるための余白 */
+  margin-top:35px;
+  margin-bottom:35px;
+}
+
+
+/* 上部 */
+
+.battle-header{
+  position:relative;
+  z-index:20;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:8px;
+}
+
+
+/* =========================
+   敵HUD
+========================= */
+
+.enemy-hud-row{
+  position:relative;
+  z-index:15;
+
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+
+  min-height:100px;
+
+  /* 約1/3を背景の上へ出す */
+  transform:translateY(-35px);
   
-  /* Screens */
-  .screen { display: none; flex-direction: column; height: 100%; }
-  .active { display: flex; }
-  
-  /* Select Screen */
-  .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; max-height: 300px; overflow-y: auto; padding: 5px; }
-  .char-card { background: #353646; border: 2px solid #4a4e69; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; }
-  .char-card.selected { border-color: #ffcc00; background: #4b4b60; }
-  .char-card h4 { margin-bottom: 5px; color: #00d2d3; }
-  
-  /* Battle Field */
-  .battle-field { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-  .battle-field.b-4p { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-  .fighter-box { background: #323344; border: 2px solid #555; border-radius: 8px; padding: 10px; position: relative; }
-  .fighter-box.active-turn { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
-  .fighter-box.dead { opacity: 0.4; filter: grayscale(1); }
-  .stat-bar { height: 12px; background: #444; border-radius: 6px; overflow: hidden; margin: 4px 0; position: relative; }
-  .stat-fill { height: 100%; transition: width 0.3s; }
-  .hp-fill { background: #ff4757; }
-  .mental-fill { background: #1e90ff; }
-  .mp-fill { background: #2ed573; }
-  .bar-text { position: absolute; width: 100%; text-align: center; font-size: 9px; line-height: 12px; top: 0; color: #fff; font-weight: bold; text-shadow: 1px 1px 1px #000; }
-  
-  /* Command Area */
-  .cmd-area { background: #1e1f2b; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  
-  /* Log Area */
-  #battle-log { height: 120px; background: #11121a; border-radius: 6px; padding: 8px; overflow-y: auto; font-size: 12px; line-height: 1.4; color: #ddd; margin-top: 10px; border: 1px solid #333; }
-  
-  /* Tooltip Modal / Hover */
-  .tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); border: 1px solid #ffcc00; color: #fff; padding: 8px; border-radius: 6px; font-size: 11px; z-index: 100; pointer-events: none; max-width: 200px; display: none; }
-  
-  /* Additional UI Buttons */
-  .battle-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .btn-danger { background: #d63031; }
-  .btn-danger:hover { background: #ff7675; }
-  .btn-success { background: #00b894; }
-  .btn-success:hover { background: #55efc4; }
+}
+
+.player-hud{
+  position:relative;
+  z-index:20;
+
+  width:46%;
+  min-height:110px;
+
+  /* 約1/3を背景の下へ出す */
+  transform:translateY(37px);
+
+  display:grid;
+  grid-template-columns:82px 1fr;
+  gap:10px;
+  padding:10px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,36,52,.97),
+      rgba(8,21,34,.97)
+    );
+
+  border:2px solid rgba(230,245,255,.85);
+  border-radius:15px;
+  box-shadow:0 7px 18px rgba(0,0,0,.4);
+}
+
+.enemy-hud{
+  width:min(310px,32%);
+
+  display:grid;
+  grid-template-columns:62px 1fr;
+  gap:8px;
+
+  padding:8px;
+
+  color:white;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,36,52,.96),
+      rgba(10,23,36,.96)
+    );
+
+  border:
+    2px solid
+    rgba(220,240,255,.8);
+
+  border-radius:14px;
+
+  box-shadow:
+    0 6px 16px
+    rgba(0,0,0,.35);
+}
+
+.hud-icon{
+  width:62px;
+  height:62px;
+
+  object-fit:contain;
+
+  background:
+    rgba(255,255,255,.08);
+
+  border:
+    2px solid
+    rgba(255,255,255,.45);
+
+  border-radius:10px;
+}
+
+.hud-icon-placeholder{
+  width:62px;
+  height:62px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  background:
+    #35445a;
+
+  border:
+    2px solid
+    rgba(255,255,255,.45);
+
+  border-radius:10px;
+
+  font-size:.72rem;
+  color:#d9e3ef;
+}
+
+.hud-name{
+  font-weight:800;
+  margin-bottom:3px;
+}
+
+.mini-stat{
+  display:grid;
+
+  grid-template-columns:
+    35px 1fr 70px;
+
+  gap:5px;
+  align-items:center;
+
+  font-size:.75rem;
+}
+
+.mini-bar{
+  height:9px;
+
+  background:#070b10;
+
+  border-radius:99px;
+
+  overflow:visible;
+}
+
+.mini-fill{
+  height:100%;
+
+  transition:
+    width .3s;
+}
+
+
+/* =========================
+   戦場
+========================= */
+
+.battle-field{
+  position:relative;
+
+  height:330px;
+
+  margin-top:-10px;
+}
+
+
+/* 自分側 */
+
+.player-sprite-area{
+  position:absolute;
+
+  left:1%;
+  bottom:0;
+
+  width:34%;
+  height:92%;
+
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+}
+
+
+/* 敵側 */
+
+.enemy-sprite-area{
+  position:absolute;
+
+  right:2%;
+  top:25px;
+
+  width:63%;
+  height:75%;
+
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-end;
+
+  gap:2%;
+}
+
+/* =========================
+   置物
+========================= */
+
+.fighter-with-object{
+  position:relative;
+
+  width:100%;
+  height:100%;
+
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+
+/*
+ キャラクター本体
+*/
+.fighter-main{
+  position:relative;
+
+  width:100%;
+  height:100%;
+
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+
+  z-index:2;
+}
+
+/*
+ 置物
+*/
+.summoned-object{
+  position:absolute;
+
+  bottom:0;
+  right:-50%;
+
+  width:100%;
+  height:100%;
+
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+
+  z-index:1;
+
+  pointer-events:none;
+}
+
+.summoned-object img{
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+  object-position:center bottom;
+
+  user-select:none;
+  pointer-events:none;
+}
+
+
+/* =========================
+   立ち絵
+========================= */
+
+.fighter-visual{
+  position:relative;
+
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+
+  transform-origin:
+    center bottom;
+}
+
+.player-visual{
+  width:100%;
+  height:100%;
+}
+
+.enemy-visual{
+  width:30%;
+  height:100%;
+}
+
+.battle-sprite{
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+
+  object-position:
+    center bottom;
+
+  user-select:none;
+
+  pointer-events:none;
+}
+
+.sprite-placeholder{
+  width:120px;
+  height:210px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  text-align:center;
+
+  border:
+    2px dashed
+    rgba(255,255,255,.7);
+
+  border-radius:20px;
+
+  background:
+    rgba(25,40,55,.55);
+
+  color:white;
+
+  font-weight:700;
+}
+
+.player-visual
+.sprite-placeholder{
+  width:190px;
+  height:270px;
+}
+
+
+/* =========================
+   メッセージ
+========================= */
+
+.battle-message{
+  position:relative;
+  z-index:20;
+
+  min-height:92px;
+
+  margin:
+    -12px 4% 8px 36%;
+
+  padding:
+    19px 44px 19px 22px;
+
+  display:flex;
+  align-items:center;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(25,42,60,.97),
+      rgba(8,22,35,.97)
+    );
+
+  border:
+    4px solid
+    #e9f4ff;
+
+  outline:
+    3px solid
+    #31cbd5;
+
+  border-radius:15px;
+
+  box-shadow:
+    0 7px 18px
+    rgba(0,0,0,.35);
+
+  font-size:
+    clamp(
+      1rem,
+      2vw,
+      1.35rem
+    );
+
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.message-next{
+  position:absolute;
+
+  right:15px;
+  bottom:9px;
+
+  opacity:.75;
+
+  animation:
+    messageArrow
+    .8s
+    infinite alternate;
+}
+
+@keyframes messageArrow{
+  from{
+    transform:
+      translateY(-2px);
+  }
+
+  to{
+    transform:
+      translateY(3px);
+  }
+}
+
+
+/* =========================
+   自分HUD
+========================= */
+
+.player-hud{
+  position:relative;
+  z-index:20;
+
+  width:46%;
+
+  min-height:110px;
+
+  margin-top:-2px;
+
+  display:grid;
+
+  grid-template-columns:
+    82px 1fr;
+
+  gap:10px;
+
+  padding:10px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,36,52,.97),
+      rgba(8,21,34,.97)
+    );
+
+  border:
+    2px solid
+    rgba(230,245,255,.85);
+
+  border-radius:15px;
+
+  box-shadow:
+    0 7px 18px
+    rgba(0,0,0,.4);
+}
+
+.player-hud
+.hud-icon,
+.player-hud
+.hud-icon-placeholder{
+  width:82px;
+  height:82px;
+}
+
+
+/* =========================
+   コマンド
+========================= */
+
+.battle-command{
+  position:relative;
+  z-index:25;
+
+  margin-top:10px;
+
+  padding:10px;
+
+  background:
+    rgba(9,20,32,.94);
+
+  border:
+    2px solid
+    rgba(190,220,245,.55);
+
+  border-radius:16px;
+}
+
+.battle-switch{
+  position:relative;
+  z-index:25;
+
+  margin-top:8px;
+}
+
+
+/* =========================
+   立ち絵エフェクト
+   赤     = ダメージ
+   黄     = バフ
+   青     = デバフ
+   ピンク = 回復
+
+   ※キャラクター画像そのものだけ変色
+   ※周囲への発光なし
+========================= */
+
+.effect-damage .battle-sprite{
+  animation:effectDamage .5s;
+}
+
+.effect-buff .battle-sprite{
+  animation:effectBuff .55s;
+}
+
+.effect-debuff .battle-sprite{
+  animation:effectDebuff .55s;
+}
+
+.effect-heal .battle-sprite{
+  animation:effectHeal .55s;
+}
+
+
+/* ダメージ：赤 */
+@keyframes effectDamage{
+
+  0%,100%{
+    filter:none;
+    transform:translateX(0);
+  }
+
+  25%{
+    filter:
+      brightness(1.15)
+      sepia(1)
+      saturate(12)
+      hue-rotate(315deg);
+
+    transform:translateX(-6px);
+  }
+
+  50%{
+    filter:
+      brightness(1.15)
+      sepia(1)
+      saturate(12)
+      hue-rotate(315deg);
+
+    transform:translateX(6px);
+  }
+
+  75%{
+    filter:
+      brightness(1.15)
+      sepia(1)
+      saturate(12)
+      hue-rotate(315deg);
+
+    transform:translateX(-3px);
+  }
+}
+
+
+/* バフ：黄 */
+@keyframes effectBuff{
+
+  0%,100%{
+    filter:none;
+  }
+
+  50%{
+    filter:
+      brightness(1.45)
+      sepia(1)
+      saturate(9)
+      hue-rotate(5deg);
+  }
+}
+
+
+/* デバフ：青 */
+@keyframes effectDebuff{
+
+  0%,100%{
+    filter:none;
+  }
+
+  50%{
+    filter:
+      brightness(1.25)
+      sepia(1)
+      saturate(9)
+      hue-rotate(155deg);
+  }
+}
+
+
+/* 回復：ピンク */
+@keyframes effectHeal{
+
+  0%,100%{
+    filter:none;
+  }
+
+  50%{
+    filter:
+      brightness(1.4)
+      sepia(1)
+      saturate(8)
+      hue-rotate(285deg);
+  }
+}
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width:1000px),
+       (hover:none) and (pointer:coarse){
+ html,
+body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+.app{
+  width:100%;
+  max-width:100%;
+  padding:6px;
+}
+
+#battle{
+  width:100%;
+  max-width:100%;
+}
+
+.battle-stage{
+  width:100%;
+  max-width:100%;
+}
+ .battle-view{
+  width:100%;
+
+  aspect-ratio:auto;
+  min-height:520px;
+
+  padding:6px;
+
+  background-size:cover;
+  background-color:#10131a;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+  /* 上部 */
+  .battle-header{
+    margin-bottom:2px;
+    font-size:.72rem;
+  }
+
+  .battle-header .btn{
+    padding:5px 8px;
+    font-size:.72rem;
+    border-radius:8px;
+  }
+
+  /* 敵HUD */
+  .enemy-hud-row{
+    min-height:48px;
+    gap:3px;
+     transform:none;
+  }
+
+  .enemy-hud{
+    width:33%;
+    min-width:0;
+
+    display:block;
+
+    padding:4px;
+
+    border-width:1px;
+    border-radius:8px;
+  }
+
+  .enemy-hud .hud-icon,
+  .enemy-hud .hud-icon-placeholder{
+    display:none;
+  }
+
+  .hud-name{
+    font-size:.68rem;
+    margin-bottom:2px;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+.mini-stat{
+  grid-template-columns:
+    24px 1fr 44px;
+
+  gap:2px;
+  align-items:center;
+
+  font-size:.55rem;
+}
+
+.mini-stat .stat-number{
+  display:inline;
+  font-size:.5rem;
+  text-align:right;
+  white-space:nowrap;
+}
+
+  .mini-stat .stat-number{
+  display:inline;
+  font-size:.5rem;
+  white-space:nowrap;
+}
+
+  .mini-bar{
+    height:5px;
+  }
+
+  /* 戦場 */
+  .battle-field{
+    height:220px;
+    margin-top:-2px;
+  }
+
+  .player-sprite-area{
+    left:1%;
+    bottom:0;
+
+    width:38%;
+    height:100%;
+  }
+
+  .enemy-sprite-area{
+    right:1%;
+    top:4px;
+
+    width:61%;
+    height:90%;
+
+    gap:1%;
+  }
+
+  .enemy-visual{
+    width:42%;
+  }
+
+  .sprite-placeholder{
+    width:48px;
+    height:80px;
+
+    border-radius:8px;
+    font-size:.5rem;
+  }
+
+  .player-visual .sprite-placeholder{
+    width:70px;
+    height:100px;
+  }
+
+  /* メッセージ */
+  .battle-message{
+    min-height:58px;
+
+    margin:
+      -8px 3% 8px 28%;
+
+    padding:
+      10px 26px 10px 12px;
+
+    border-width:2px;
+    outline-width:1px;
+    border-radius:8px;
+
+    font-size:.78rem;
+    line-height:1.25;
+  }
+
+  .message-next{
+    right:7px;
+    bottom:4px;
+    font-size:.65rem;
+  }
+
+  /* 自分HUD */
+  .player-hud{
+    width:72%;
+    min-height:72px;
+
+    margin-top:0;
+    transform:none;
+
+    grid-template-columns:
+      46px 1fr;
+
+    gap:6px;
+
+    padding:6px;
+
+    border-width:1px;
+    border-radius:8px;
+  }
+
+  .player-hud .hud-icon,
+  .player-hud .hud-icon-placeholder{
+    width:46px;
+    height:46px;
+
+    border-radius:6px;
+    font-size:.45rem;
+  }
+
+  .player-hud .hud-name{
+    font-size:.68rem;
+  }
+
+  .player-hud .mini-stat{
+  grid-template-columns:
+    22px 1fr 44px;
+
+  font-size:.52rem;
+}
+
+  .player-hud .small{
+    font-size:.48rem;
+    line-height:1.15;
+  }
+
+  /* 交代 */
+  .battle-switch{
+    margin-top:4px;
+    padding:0 4px;
+    gap:4px;
+  }
+
+  .battle-switch .btn{
+    padding:6px 8px;
+    font-size:.68rem;
+  }
+
+  /* コマンド */
+  .battle-command{
+    margin-top:4px;
+    padding:6px;
+
+    border-radius:10px;
+    border-width:1px;
+  }
+
+  .move-section{
+    margin-top:6px;
+  }
+
+  .move-section:first-child{
+    margin-top:0;
+  }
+
+  .move-section-title{
+    margin:2px 0 4px;
+    padding:4px 6px;
+
+    font-size:.68rem;
+    border-radius:6px;
+  }
+
+  .move-section-grid{
+    grid-template-columns:
+      repeat(2,1fr);
+
+    gap:5px;
+  }
+
+  .move{
+    min-height:46px;
+
+    padding:7px 8px;
+
+    font-size:.68rem;
+    line-height:1.15;
+
+    border-radius:8px;
+  }
+
+  /* キャラ選択 */
+  .character-grid{
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .character{
+    min-height:150px;
+  }
+
+  .small{
+    font-size:.72rem;
+  }
+}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div id="app">
-  <!-- タイトル画面 -->
-  <div id="sc-title" class="screen active">
-    <h1>キャラ対戦バトル</h1>
-    <div style="display:flex; flex-direction:column; gap:15px; width:250px; margin: auto;">
-      <button onclick="initMode('1v1')">タイマン (1vs1)</button>
-      <button onclick="initMode('3v3')">3vs3 交代制</button>
-      <button onclick="initMode('4p')">4人乱闘</button>
-      <button onclick="initOnline()">オンライン友人戦</button>
+<section id="home" class="screen active">
+  <div class="card">
+    <h1>妖怪ウォッチ2 覇道</h1>
+    <p class="small">HPまたはメンタルが0になった瞬間に脱落。ターン開始時MP回復。補正後の数値は四捨五入。</p>
+    <div class="grid home-grid">
+      <div class="card">
+        <h2>CPと対戦</h2>
+        <button class="btn primary" onclick="openMode('cpu')">ゲームモード選択</button>
+      </div>
+      <div class="card">
+        <h2>オンライン友人戦</h2>
+        <p class="small">4桁の部屋番号を使って友人とオンライン対戦できます。</p>
+        <button class="btn" onclick="openOnline()">部屋メニュー</button>
+      </div>
     </div>
   </div>
+</section>
 
-  <!-- オンラインルーム画面 -->
-  <div id="sc-online" class="screen">
+<section id="online" class="screen">
+  <div class="card">
     <h2>オンライン友人戦</h2>
-    <div style="margin:auto; text-align:center;">
-      <input type="text" id="room-code" placeholder="部屋番号(4桁)" maxlength="4" style="padding:8px; font-size:16px; text-align:center; width:120px;">
-      <br><br>
-      <button onclick="joinRoom()">部屋に入る / 作成</button>
-      <button onclick="showScreen('sc-title')">戻る</button>
+    <div class="row">
+      <button class="btn primary" onclick="createRoom()">部屋を作る</button>
+      <input id="roomInput" maxlength="4" inputmode="numeric" placeholder="4桁"/>
+      <button class="btn" onclick="joinRoom()">参加</button>
+    </div>
+    <div id="roomInfo" class="spacer"></div>
+    <button class="btn" onclick="show('home')">戻る</button>
+  </div>
+</section>
+
+<section id="mode" class="screen">
+  <div class="card">
+    <h2>ゲームモード</h2>
+    <div class="grid home-grid">
+      <button class="btn" onclick="setMode('duel')">タイマン</button>
+      <button class="btn" onclick="setMode('team3')">3 vs 3 交代制</button>
+      <button class="btn" onclick="setMode('ffa4')">乱闘</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="show('home')">戻る</button>
+  </div>
+</section>
+
+<section id="select" class="screen">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2>キャラ選択</h2>
+      <span id="selectGuide" class="small"></span>
+    </div>
+    <div id="charGrid" class="character-grid"></div>
+    <div class="spacer"></div>
+    <div class="row">
+      <button id="startBtn" class="btn primary" onclick="startBattle()">対戦開始</button>
+      <span id="readyInfo" class="small"></span>
+      <button class="btn" onclick="show('mode')">戻る</button>
     </div>
   </div>
+</section>
 
-  <!-- キャラ選択画面 -->
-  <div id="sc-select" class="screen">
-    <h2 id="select-title">キャラクター選択</h2>
-    <div class="char-grid" id="char-selector"></div>
-    <div id="select-info" style="font-size:12px; background:#1e1f2b; padding:10px; border-radius:6px; min-height:80px; margin-bottom:10px;"></div>
-    <div style="display:flex; justify-content:space-between;">
-      <button onclick="showScreen('sc-title')">戻る</button>
-      <button id="btn-confirm-select" onclick="confirmSelection()">決定</button>
-    </div>
-  </div>
+<section id="battle" class="screen">
 
-  <!-- 戦闘画面 -->
-  <div id="sc-battle" class="screen">
+  <div id="battleStage" class="battle-stage">
+
+  <div id="battleView" class="battle-view">
+
+    <!-- 上部 -->
     <div class="battle-header">
-      <span id="battle-mode-label" style="font-weight:bold; color:#00d2d3;">対戦中</span>
-      <button class="btn-danger" onclick="quitBattle()">参戦辞退 (ホームへ戻る)</button>
+
+      <div>
+        <b id="modeLabel"></b>
+        <div id="turnLabel" class="small"></div>
+      </div>
+
+      <button
+        class="btn danger"
+        onclick="retire()"
+      >
+        退散
+      </button>
+
     </div>
 
-    <div id="battle-field" class="battle-field"></div>
-    
-    <div class="cmd-area">
-      <div id="cmd-header" style="font-size:14px; font-weight:bold; color:#ffcc00;">行動選択</div>
-      <div id="cmd-actions" class="btn-grid"></div>
-      <div id="cmd-targets" class="btn-grid" style="display:none;"></div>
-      <div id="cmd-bench" class="btn-grid" style="display:none;"></div>
+    <!-- 敵ステータス -->
+    <div
+      id="enemyHudRow"
+      class="enemy-hud-row"
+    ></div>
+
+    <!-- キャラクター表示エリア -->
+    <div class="battle-field">
+
+      <!-- 自分 -->
+      <div
+        id="playerSpriteArea"
+        class="player-sprite-area"
+      ></div>
+
+      <!-- 敵 -->
+      <div
+        id="enemySpriteArea"
+        class="enemy-sprite-area"
+      ></div>
+
     </div>
 
-    <div id="battle-log"></div>
+    <!-- メッセージ -->
+    <div
+      id="battleMessage"
+      class="battle-message"
+      onclick="advanceBattleMessage()"
+    >
+      <span id="battleMessageText">
+        対戦開始！
+      </span>
 
-    <!-- ゲーム終了時ナビゲーションUI -->
-    <div id="end-game-nav" style="display:none; margin-top:10px; gap:10px; justify-content:center;">
-      <button class="btn-success" onclick="retryBattle()">もう一度あそぶ</button>
-      <button onclick="backToCharSelect()">キャラ選択に戻る</button>
-      <button onclick="showScreen('sc-title')">ホームに戻る</button>
+      <span class="message-next">
+        ▼
+      </span>
+    </div>
+
+  <!-- 自分ステータス -->
+<div
+  id="playerHud"
+  class="player-hud"
+></div>
+
+<!-- 背景範囲 battleView ここまで -->
+</div>
+
+<!-- 交代 -->
+<div
+  id="switchRow"
+  class="row battle-switch"
+></div>
+
+    <!-- コマンド -->
+    <div
+      id="moves"
+      class="battle-command"
+    ></div>
+
+  </div>
+
+</section>
+
+<section id="result" class="screen">
+  <div class="card">
+    <div id="resultText" class="result"></div>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" onclick="rematch()">もういちど</button>
+      <button class="btn" onclick="backToSelect()">キャラ選択に戻る</button>
+      <button class="btn" onclick="show('home')">ホームに戻る</button>
     </div>
   </div>
+</section>
+
 </div>
 
 <div id="tooltip" class="tooltip"></div>
 
 <script>
-// --- データベース定義 ---
-const SPECIES = {
-  BIBYUTSU: 'びびゅつか', YUREI: 'ゆうれいぶいん', HIBAKU: 'ひばくしゃ', ROUNIN: 'ろうにんせい',
-  KITSUEN: 'きつえんしゃ', UMADURA: 'うまづら', TANKI: 'たんきだいがく', ROUJIN: 'ろうじん',
-  ARUCHU: 'あるちゅう', ONGAKU: 'おんがくか', FRAN: 'fラン', MOJAMOJA: 'もじゃもじゃ',
-  DEBU: 'デブ', RUGBY: 'らぐびーぶ', FUTSU: 'ふつう', SHISOU: 'しそうか', ONNA: 'おんな'
-};
+/* =========================
+   素材設定
+   空欄ならプレースホルダー表示
+========================= */
 
-const COMMON_SKILLS = [
-  { name: 'なぐる', mp: 0, pDmg: 5, mDmg: 0, desc: '通常物理攻撃(消費0)' },
-  { name: 'わるぐち', mp: 0, pDmg: 0, mDmg: 5, desc: '通常精神攻撃(消費0)' },
-  { name: 'わるだくみ', mp: 1, type: 'buff', desc: '次のターンの精神ダメ1.2倍' },
-  { name: 'やすむ', mp: 1, heal: 10, desc: 'HPと精神を10回復' },
-  { name: 'ぼうぎょ', mp: 0, type: 'def', desc: '受けるダメージ-10(先攻になり相手攻撃と同時発動)' }
-];
+const battleAssets={
 
-const SKILL_DB = {
-  'れいしょう': { mp: 0, mDmg: 5, mpRec: 1, desc: '精神ダメ5, MP1回復', attr: [] },
-  'しんれいげんしょう': { mp: 2, mDmg: 15, desc: '精神ダメ15 (びっくり/心霊)', attr: ['しんれい'] },
-  'おえかき': { mp: 0, mDmg: 5, mpRec: 1, attr: ['いろ'], desc: '色属性 精神ダメ5, MP1回復' },
-  'べんきょう': { mp: 0, mpRec: 2, selfDmg: 5, desc: 'MP2回復, 自身HP&精神に5ダメ' },
-  'いんしゅ': { mp: 0, mpRec: 1, selfHp: -5, randMental: true, desc: 'MP+1, HP-5, 1/2で精神±5' },
-  'からて': { mp: 3, pDmg: 30, buffNextPhys: 1.2, desc: '物ダメ30, 次ターン物ダメ1.2倍' },
-  'おおごえ': { mp: 2, pDmg: 15, mDmg: 5, attr: ['おと'], desc: '音属性 物ダメ15, 精神ダメ5' },
-  'たどうしょう': { mp: 1, buffNextPhys: 1.1, desc: '次ターンの物ダメ1.1倍' },
-  'きつえん': { mp: 1, selfHp: -5, selfMen: 10, desc: 'HP-5, 精神+10' },
-  'ちーといつ': { mp: 1, multi: 7, baseDmg: 2, multiScale: 1.1, desc: '2ダメ×7回多段攻撃(1回毎1.1倍)' },
-  '投資': { mp: 0, reqMp: 1, gambleMp: true, desc: '成功でMP+5, 失敗でMP-5' },
-  'ギャンブル': { mp: 3, gambleDmg: 50, desc: '確率で50ダメージ' },
-  'サッカー': { mp: 1, pDmg: 10, desc: '物ダメ10' },
-  'えんそう': { mp: 0, debuffEnemyMen: 0.8, desc: '相手の精神攻撃力×0.8' },
-  'タックル': { mp: 2, pDmg: 30, selfDmg: 10, desc: '物ダメ30, 自身に10ダメ' },
-  'ラップ': { mp: 1, buffNextPhys: 1.1, desc: '次ターンの物ダメ1.1倍' },
-  'ガンダム': { mp: 8, unique: 'gundam', desc: '毎ターン終わりに全体物理10ダメのガンダム召喚' },
-  'みつぞうしゅ': { mp: 0, healHp: 20, desc: 'HP+20回復' },
-  'たけやまバズーカ': { mp: 2, pDmg: 20, priority: true, desc: '物ダメ20 (必ず先攻)' },
-  'ピカドンボイス': { mp: 4, pDmg: 50, mDmg: 10, selfDmg: 10, attr: ['おと'], desc: '音属性 物50,精神10,自分10ダメ' },
-  'ろうにんせいかつ': { mp: 1, healHp: 10, mpRec: 3, selfMenDmg: 5, desc: 'HP10回復, MP3回復, 精神5ダメ' },
-  'うわき': { mp: 3, mDmgOnFemale: 50, selfPhysRisk: 20, desc: '女種族に精神50ダメ, 確率で自分物20ダメ' },
-  'あばれうま': { mp: 0, unique: 'abareuma', desc: '3ターン操作不能・物理2倍, 自分にも0.5倍ダメ' },
-  'ペンキばくはつ': { mp: 3, attr: ['いろ'], mDmgAll: 50, pDmgAll: 5, desc: '色属性 全体精神50, 全体物5' },
-  'せいり': { mp: 5, unique: 'seiri', desc: '確率で相手HP/精神の片方または両方に35ダメ' },
-  'どくそう': { mp: -2, attr: ['おと'], mDmg: 20, pDmg: 10, desc: '音属性 精神20,物10, MP2消費' },
-  'まいご': { mp: 0, unique: 'maigo', desc: '物理完全回避, 確率で相手精神攻撃力1.2倍' },
-  'ついんぶらっく': { mp: 1, attr: ['いろ'], pDmg: 10, multi: 2, desc: '色属性 物10ダメ×2回' },
-  'きれる': { mp: 5, buffNextAll: 1.5, desc: '次ターンの物理・精神攻撃1.5倍' },
-  'ばとう': { mp: 3, dotMen: 5, desc: '相手を毎ターン精神5減少状態にする(6重化)' },
-  'からみつく': { mp: 2, debuffPriority: true, desc: '相手の先攻確率を1/5に低下させる' },
-  'だっぷん': { mp: 4, mDmgAll: 20, pDmgSingle: 20, desc: '全体精神20(自身込), 他1人に物20' },
-  'ねんてん': { mp: 1, selfDmg: 50, resistMen: 0.7, desc: '自身物理50ダメ, 以降精神ダメ0.7倍(4重可)' },
-  'バイトテロ': { mp: 3, pDmg: 10, mDmg: 10, doubleRoujin: true, desc: '物10,精神10 (老人には2倍)' },
-  'えんげき': { mp: 1, unique: 'engeki', desc: '必ず後攻になり相手と同じ技をやり返す' },
-  'いぬ': { mp: 0, selfStanceInu: true, desc: '物理ダメ半減, 自分精神10ダメ' },
-  'ゆかぺろ': { mp: 0, selfDmg: 10, buffNextPhys: 1.2, desc: '自分物理10ダメ, 次ターン物ダメ1.2倍' },
-  'けんびきょう': { mp: 0, absorbMp: 1, desc: '相手のMPを1吸収' },
-  'おちゃたて': { mp: 0, healMen: 10, desc: '精神10回復' },
-  'すいみんぐ': { mp: 4, unique: 'swimming', desc: '1ターン潜航し次ターン後攻で物ダメ40' },
-  'かいご': { mp: 2, healMen: 30, desc: '精神30回復' },
-  'たたきおこす': { mp: 3, pDmg: 40, giveMp: 2, desc: '物ダメ40, 相手のMP2回復' }
-};
+backgrounds:[
+ 'southcort.png',
+ 'bey.png'
+],
 
-const CHARACTERS = [
-  {
-    id: 'kk', name: 'KK', hp: 70, mental: 110, mp: 10,
-    species: [SPECIES.BIBYUTSU, SPECIES.YUREI],
-    traits: ['しきもう', 'ふきんしん', 'なぞのこうい', 'じーぴーえー', 'うんどうおんち'],
-    special: ['ガンダム', 'みつぞうしゅ', 'たけやまバズーカ'],
-    moves: ['れいしょう', 'わるだくみ', 'しんれいげんしょう', 'おえかき', 'べんきょう', 'いんしゅ']
-  },
-  {
-    id: 'asato', name: 'あさと', hp: 120, mental: 80, mp: 8,
-    species: [SPECIES.HIBAKU, SPECIES.ROUNIN],
-    traits: ['おおごえ', '無神経', 'むげん成長', 'ぼうず', 'びびり', 'まゆなし'],
-    special: ['ピカドンボイス', 'ろうにんせいかつ'],
-    moves: ['からて', 'おおごえ', 'れいしょう', 'たどうしょう', 'べんきょう']
-  },
-  {
-    id: 'ui', name: 'うい', hp: 110, mental: 110, mp: 9,
-    species: [SPECIES.KITSUEN],
-    traits: ['うわきしょう', 'だんそんじょひ', 'れいしょうけい'],
-    special: ['うわき'],
-    moves: ['おおごえ', 'やすむ', 'からて', 'れいしょう', 'たどうしょう', 'べんきょう', 'きつえん', 'いんしゅ', 'わるだくみ', 'ちーといつ']
-  },
-  {
-    id: 'mimaya', name: 'みまや', hp: 115, mental: 95, mp: 8,
-    species: [SPECIES.UMADURA, SPECIES.KITSUEN, SPECIES.TANKI],
-    traits: ['うわきしょう', 'ギャンブラー', 'えんきんほう', 'めめしい'],
-    special: ['あばれうま'],
-    moves: ['たどうしょう', 'おおごえ', 'きつえん', 'いんしゅ', '投資', 'ギャンブル']
-  },
-  {
-    id: 'yuma', name: 'ゆうま', hp: 110, mental: 100, mp: 7,
-    species: [SPECIES.ROUJIN, SPECIES.ARUCHU],
-    traits: ['ボケ', 'ギャンブラー', 'しらが', 'あかいろ', 'むしば', 'あるつはいまー'],
-    special: ['ペンキばくはつ', 'せいり'],
-    moves: ['いんしゅ', '投資', 'ギャンブル', 'べんきょう', 'おえかき', 'サッカー']
-  },
-  {
-    id: 'rentaro', name: 'れんたろう', hp: 110, mental: 90, mp: 6,
-    species: [SPECIES.ONGAKU, SPECIES.FRAN],
-    traits: ['わがまま', 'おやのななひかり', 'くろいろ', 'じゅんあい'],
-    special: ['どくそう', 'まいご', 'ついんぶらっく'],
-    moves: ['たどうしょう', 'おおごえ', 'サッカー', 'えんそう']
-  },
-  {
-    id: 'massu', name: 'まっすー', hp: 90, mental: 90, mp: 9,
-    species: [SPECIES.MOJAMOJA],
-    traits: ['どくぜつ', 'びびり', 'ちゅうそつのいでんし', 'にじゅうじんかく'],
-    special: ['きれる', 'ばとう', 'からみつく'],
-    moves: ['れいしょう', 'べんきょう', 'ギャンブル']
-  },
-  {
-    id: 'masaya', name: 'まさや', hp: 100, mental: 110, mp: 5,
-    species: [SPECIES.DEBU, SPECIES.RUGBY],
-    traits: ['ごうまん', 'かりめん', 'あくしゅう', 'きょたい'],
-    special: ['だっぷん', 'ねんてん', 'バイトテロ'],
-    moves: ['タックル', 'べんきょう', 'ギャンブル', 'いんしゅ', 'サッカー', 'ラップ']
-  },
-  {
-    id: 'satokei', name: 'さとけい', hp: 100, mental: 100, mp: 8,
-    species: [SPECIES.FUTSU],
-    traits: ['いぬけい', 'じんだいのかこい'],
-    special: ['えんげき', 'いぬ'],
-    moves: ['おおごえ', 'サッカー', 'べんきょう', 'ちーといつ', 'れいしょう']
-  },
-  {
-    id: 'miyabi', name: 'みやび', hp: 70, mental: 110, mp: 6,
-    species: [SPECIES.SHISOU],
-    traits: ['じゅんあい', 'うんどうおんち', 'できん', 'どくぜつ', 'だんそんじょひ', 'きけんしそう'],
-    special: ['ゆかぺろ', 'けんびきょう', 'おちゃたて'],
-    moves: ['べんきょう', '投資', 'ラップ', 'れいしょう', 'わるだくみ', 'タックル']
-  },
-  {
-    id: 'mucchan', name: 'むっちゃん', hp: 120, mental: 110, mp: 6,
-    species: [SPECIES.ONNA, SPECIES.DEBU, SPECIES.BIBYUTSU],
-    traits: ['じあいのこころ', 'きょたい', 'ごうまん', 'ユーチューバー'],
-    special: ['すいみんぐ', 'かいご', 'たたきおこす'],
-    moves: ['タックル', 'おえかき', 'おおごえ', 'べんきょう', 'しんれいげんしょう']
-  }
-];
+ characters:{
 
-// --- ゲーム状態管理 ---
-let gameState = {
-  mode: '1v1',
-  players: [],
-  turn: 1,
-  pendingActions: {},
-  activePlayerIndex: 0
-};
+  KK:{
+   player:'characters/kk-b.png',
+   enemy:'characters/kk.png',
+   icon:'characters/kk.png'
+  },
 
-// --- 画面遷移 ---
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+  あさと:{
+   player:'characters/asato-b.png',
+   enemy:'characters/asato.png',
+   icon:'characters/asato.png'
+  },
 
-let selectedChars = [];
-let maxSelect = 1;
+  うい:{
+   player:'characters/ui-b.png',
+   enemy:'characters/ui.png',
+   icon:'characters/ui.png'
+  },
 
-function initMode(mode) {
-  gameState.mode = mode;
-  selectedChars = [];
-  if (mode === '1v1') maxSelect = 1;
-  else if (mode === '3v3') maxSelect = 3;
-  else if (mode === '4p') maxSelect = 1;
+  みまや:{
+   player:'characters/mimaya-b.png',
+   enemy:'characters/mimaya.png',
+   icon:'characters/mimaya.png'
+  },
+
+  ゆうま:{
+   player:'characters/yuma-b.png',
+   enemy:'characters/yuma.png',
+   icon:'characters/yuma.png'
+  },
+
+  れんたろう:{
+   player:'characters/rentaro-b.png',
+   enemy:'characters/rentaro.png',
+   icon:'characters/rentaro.png'
+  },
+
+  まっすー:{
+   player:'characters/massuu-b.png',
+   enemy:'characters/massuu.png',
+   icon:'characters/massuu.png'
+  },
+
+  まさや:{
+   player:'characters/masaya-b.png',
+   enemy:'characters/masaya.png',
+   icon:'characters/masaya.png'
+  },
+
+  さとけい:{
+   player:'characters/satokei-b.png',
+   enemy:'characters/satokei.png',
+   icon:'characters/satokei.png'
+  },
+
+  みやび:{
+   player:'characters/miyabi-b.png',
+   enemy:'characters/miyabi.png',
+   icon:'characters/miyabi.png'
+  },
+
+  むっちゃん:{
+   player:'characters/mucchan-b.png',
+   enemy:'characters/mucchan.png',
+   icon:'characters/mucchan.png'
+  },
+
   
-  document.getElementById('select-title').innerText = `キャラクター選択 (${selectedChars.length}/${maxSelect})`;
-  renderCharSelector();
-  showScreen('sc-select');
-}
+      けっぽん:{
+   player:'characters/keppon-b.png',
+   enemy:'characters/keppon.png',
+   icon:'characters/keppon.png'
+  },
 
-function initOnline() {
-  showScreen('sc-online');
-}
-
-function joinRoom() {
-  const code = document.getElementById('room-code').value;
-  if (code.length === 4) {
-    alert(`部屋 ${code} に接続しました（オンライン用ダミー）`);
-    initMode('1v1');
-  } else {
-    alert('4桁の部屋番号を入力してください');
+  いろは:{
+   player:'characters/iroha-b.png',
+   enemy:'characters/iroha.png',
+   icon:'characters/iroha.png'
+  },
+   ながくら:{
+   player:'characters/nagakura-b.png',
+   enemy:'characters/nagakura.png',
+   icon:'characters/nagakura.png'
+  },
+    ジェネシス:{
+   player:'characters/genesis-b.png',
+   enemy:'characters/genesis.png',
+   icon:'characters/genesis.png'
+  },
+    エゲシグ:{
+   player:'characters/egesigu-b.png',
+   enemy:'characters/egesigu.png',
+   icon:'characters/egesigu.png'
   }
+
+ },
+
+ objects:{
+
+  gundam:{
+    player:'characters/gundam-b.png',
+    enemy:'characters/gundam.png'
+  },
+
+  haruka:{
+    player:'characters/haruka-b.png',
+    enemy:'characters/haruka.png'
+  }, 
+    remi:{
+    player:'characters/remi-b.png',
+    enemy:'characters/remi.png'
+  }
+
+},
+
+ 
+
+sounds:{
+  command:'',
+  damage:'sound/damage.mp3',
+  buff:'sound/buff.mp3',
+  debuff:'sound/debuff.mp3',
+  heal:'sound/heal.mp3',
+  defeat:'',
+  victory:'sound/victory.mp3',
+  ready:'sound/ready.mp3'
+}
+};
+
+/* =========================
+   現在の戦闘背景
+========================= */
+
+let currentBattleBackground='';
+
+function chooseBattleBackground(){
+
+ const list=
+  battleAssets.backgrounds||[];
+
+ if(!list.length){
+  currentBattleBackground='';
+  return;
+ }
+
+ currentBattleBackground=
+  list[
+   Math.floor(
+    Math.random()*list.length
+   )
+  ];
 }
 
-function renderCharSelector() {
-  const grid = document.getElementById('char-selector');
-  grid.innerHTML = '';
-  CHARACTERS.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'char-card' + (selectedChars.includes(c.id) ? ' selected' : '');
-    card.innerHTML = `<h4>${c.name}</h4><div style="font-size:10px;">HP:${c.hp} MP:${c.mp}</div>`;
-    card.onclick = () => selectChar(c.id);
-    card.onmouseenter = (e) => showTooltip(e, getCharInfoHtml(c));
-    card.onmouseleave = hideTooltip;
-    grid.appendChild(card);
+/* =========================
+   戦闘BGM
+========================= */
+const buttonSe = new Audio('sound/button.mp3');
+buttonSe.volume = 0.7;
+buttonSe.preload = 'auto';
+
+
+
+const battleBgm = new Audio('sound/battle-bgm.mp3');
+battleBgm.loop = true;
+battleBgm.volume = 0.1;
+
+function playButtonSe(){
+  buttonSe.currentTime = 0;
+  buttonSe.play().catch(()=>{});
+}
+
+
+
+battleBgm.loop = true;
+battleBgm.volume = 0.1;
+
+function startBattleBgm(){
+
+ battleBgm.currentTime = 0;
+
+ battleBgm.play().catch(()=>{
+  // ブラウザに自動再生を止められた場合
+ });
+}
+
+function stopBattleBgm(){
+
+ battleBgm.pause();
+ battleBgm.currentTime = 0;
+}
+const P={normal:.5,low:.25,evasion:.25,accident:.25};
+
+const commonMoves={
+ 'なぐる':{physical:5},
+ 'わるぐち':{mental:5},
+ 'やすむ':{mp:1,healHp:10,healMental:10},
+ '防御':{guard:10,priorityGuard:true},
+ 'よける':{mp:2,special:'dodge'},
+ 'スキップ':{special:'skip'}
+};
+
+const moveBook={
+ 'れいしょう':{mp:0,mpGain:1,mental:5},
+  'ジャンプスケア':{mp:2,mental:20,tags:['しんれい','おと']},
+ 'しんれいげんしょう':{mp:2,mental:15,tags:['しんれい']},
+ 'わるだくみ':{mp:1,buffMentalNext:1.2},
+ 'おえかき':{mpGain:1,mental:5,tags:['いろ']},
+ 'べんきょう':{mpGain:2,selfHp:-5,selfMental:-5},
+ 'いんしゅ':{mpGain:1,selfHp:-5,randomMentalDrink:true},
+ 'おおごえ':{mp:2,physical:15,mental:5,tags:['おと']},
+ 'からて':{mp:3,physical:30},
+ 'たどうしょう':{mp:1,buffPhysicalNext:1.1},
+ 'きつえん':{mp:1,selfHp:-5,healMental:10},
+ 'ちーといつ':{mp:1,multi:[2,2.2,2.42,2.662,2.9282,3.22102,3.543122]},
+ '投資':{special:'invest'},
+ 'とうし':{special:'invest'},
+ 'ギャンブル':{mp:4,special:'gamble'},
+ 'ぎゃんぶる':{mp:3,special:'gamble'},
+ 'さっかー':{mp:1,physical:10},
+ 'ラップ':{mp:1,buffPhysicalNext:1.1},
+ 'タックル':{mp:2,physical:30,selfHp:-10},
+ 'たっくる':{mp:2,physical:30,selfHp:-20},
+ 'えんそう':{debuffEnemyMentalAtk:.8},
+ 'いっぽん':{mp:3,physical:30},
+ 'おうと':{mp:5,mental:50,selfHp:-5,selfMental:-5},
+ 'きせいする':{mp:2,special:'parasite'},
+ 'こうおん':{mp:1,physical:10,tags:['おと'],special:'highTone'},
+};
+
+const chars=[
+{name:'KK',hp:80,mental:110,mp:10,races:['びびゅつか','ゆうれいぶいん'],traits:['しきもう','ふきんしん','なぞのこうい','めんざいたいしつ','うんどうおんち'],moves:{'ガンダム':{mp:8,special:'gundam'},'みつぞうしゅ':{healHp:20},'たけやまバズーカ':{mp:2,physical:20,priority:true},...pick(['れいしょう','わるだくみ','しんれいげんしょう','おえかき','べんきょう','いんしゅ'])}},
+{name:'あさと',hp:120,mental:80,mp:8,races:['ひばくしゃ','ろうにんせい'],traits:['あるくTDL','無神経','むげん成長','ぼうず','びびり','まゆなし'],moves:{'ピカドンボイス':{mp:9,physical:40,mental:10,selfHp:-10,tags:['おと']},'ろうにんせいかつ':{mp:1,healHp:10,mpGain:3,selfMental:-5},...pick(['からて','おおごえ','れいしょう','たどうしょう','べんきょう'])}},
+{name:'うい',hp:110,mental:110,mp:9,races:['きつえんしゃ'],traits:['うわきしょう','だんそんじょひ','れいしょうけい'],moves:{'うわき':{mp:3,special:'affair'},...pick(['おおごえ','やすむ','からて','れいしょう','たどうしょう','べんきょう','きつえん','いんしゅ','わるだくみ','ちーといつ'])}},
+{name:'みまや',hp:115,mental:95,mp:7,races:['うまづら','きつえんしゃ','たんきだいがく'],traits:['うわきしょう','ギャンブラー','えんきんほう','めめしい'],moves:{'あばれうま':{special:'rampage'},...pick(['たどうしょう','おおごえ','きつえん','いんしゅ','投資','ギャンブル'])}},
+{name:'ゆうま',hp:110,mental:100,mp:7,races:['ろうじん','あるちゅう'],traits:['ボケ','しらが','あかいろ','むしば','あるつはいまー'],moves:{'ペンキばくはつ':{mp:3,physical:5,mental:50,tags:['いろ'],allTargets:true},'なかゆび':{
+ mp:3,
+ special:'middleFinger'
+},'せいり':{mp:5,special:'seiri'},...pick(['いんしゅ','とうし','ぎゃんぶる','べんきょう','おえかき','さっかー'])}},
+{name:'れんたろう',hp:110,mental:90,mp:6,races:['おんがくか','fラン'],traits:['わがまま','おやのななひかり','くろいろ','じゅんあい'],moves:{'どくそう':{mp:2,physical:10,mental:20,tags:['おと']},'まいご':{mp:1,special:'lost'},'ついんぶらっく':{mp:1,multi:[10,10],tags:['いろ']},'はるか':{mp:6,special:'haruka'},...pick(['たどうしょう','おおごえ','さっかー','えんそう'])}},
+{name:'まっすー',hp:90,mental:90,mp:9,races:['もじゃもじゃ'],traits:['どくぜつ','びびり','ちゅうそつのいでんし','にじゅうじんかく'],moves:{'きれる':{mp:5,buffPhysicalNext:1.5,buffMentalNext:1.5},'ばとう':{mp:3,special:'verbalDot'},'からみつく':{mp:2,special:'entangle'},...pick(['れいしょう','べんきょう','ギャンブル'])}},
+{name:'まさや',hp:150,mental:90,mp:5,races:['デブ','らぐびーぶ'],traits:['ごうまん','かりめん','あくしゅう','きょたい'],moves:{'だっぷん':{mp:4,special:'poop'},'ねんてん':{mp:1,selfHp:-50,special:'mentalResistStack'},'ばいとテロ':{mp:3,physical:10,mental:10,special:'elderDouble'},...pick(['タックル','べんきょう','ギャンブル','いんしゅ','さっかー','ラップ'])}},
+{name:'さとけい',hp:100,mental:100,mp:8,races:['ふつう'],traits:['いぬけい','じんだいのかこい'],moves:{'えんげき':{mp:2,special:'copy',copyPriority:true},'いぬ':{selfMental:-10,special:'dogGuard'},...pick(['おおごえ','さっかー','べんきょう','ちーといつ','れいしょう','おうと'])}},
+{name:'みやび',hp:80,mental:110,mp:7,races:['しそうか'],traits:['じゅんあい','うんどうおんち','できん','どくぜつ','だんそんじょひ','きけんしそう'],moves:{'ゆかぺろ':{selfHp:-10,buffPhysicalNext:1.2},'けんびきょう':{special:'stealMp'},'おちゃたて':{healMental:10},'リン':{mp:3,special:'rin'},...pick(['べんきょう','とうし','ラップ','れいしょう','わるだくみ','タックル'])}},
+{name:'むっちゃん',hp:120,mental:110,mp:6,races:['おんな','デブ','びびゅつか'],traits:['じあいのこころ','きょたい','ごうまん','ユーチューバー'],moves:{'すいみんぐ':{mp:4,special:'swim'},'かいご':{mp:2,healMental:30},'たたきおこす':{mp:3,physical:40,special:'wakeMp'},...pick(['たっくる','おえかき','おおごえ','べんきょう','しんれいげんしょう'])}},
+{name:'けっぽん',hp:75,mental:75,mp:8,races:['おんな','ミックス'],traits:['ひかりのヴェール','むちのヴェール','ゆいいつしんのかご'],moves:{'かみをまく':{special:'wrapHair'},'ハラールフード':{mp:3,special:'halalFood'},'かめんをとる':{mp:8,special:'removeMask'},'ホロゴヌ・サニア・コイケ':{mp:5,special:'randomMove'},...pick(['しんれいげんしょう','いっぽん','きせいする'])}},
+
+{name:'いろは',hp:80,mental:80,mp:10,races:['おんな','なめくじ'],traits:['しかい','にじゅうじんかく','レイシスト','うんどうおんち'],moves:{
+ 'しめあげる':{mp:3,special:'strangle'},
+ 'ハンドピース':{mp:3,special:'handPiece'},
+ 'なめくじエキス':{mp:2,special:'slugExtract'},
+ 'れみ':{mp:9,special:'remi'},
+ ...pick(['きせいする','おうと','こうおん','おおごえ'])
+}},
+
+{name:'ながくら',hp:130,mental:90,mp:6,races:['やきゅうぶ'],traits:['HG','ピッチャー'],moves:{
+ 'ストラックアウト':{mp:5,special:'strikeOut'},
+ 'できんにする':{special:'giveDekin'},
+ 'とうきゅう':{mp:3,special:'pitchAttack'},
+ ...pick(['ギャンブル','べんきょう','おおごえ'])
+}},
+ {name:'ジェネシス',hp:90,mental:100,mp:6,races:['おんな','ミックス'],traits:['そうせいおう','マジレス'],moves:{
+ 'てんちそうぞう':{mp:10,special:'creation'},
+ 'かいめい':{mp:8,special:'analysis'},
+ ...pick(['こうおん','れいしょう','ジャンプスケア','わるだくみ','おおごえ'])
+}},
+
+{name:'エゲシグ',hp:100,mental:110,mp:6,races:['りゅうがくせい','モンゴルじん'],traits:['ゆうぼくみん','たいりくのはしゃ'],moves:{
+ 'エスニックジョーク':{special:'ethnicJoke'},
+ 'パルティアンショット':{mp:3,special:'parthianShot'},
+ 'てつはう':{mp:4,physical:30,priority:true},
+ 'てんまく':{mp:2,guard:30,priorityGuard:true},
+ ...pick(['べんきょう','さっかー','ジャンプスケア'])
+}}
+];
+function pick(arr){
+ const o={};
+ for(const n of arr)o[n]=moveBook[n]||commonMoves[n]||{};
+ return o;
+}
+
+let appState={
+ connection:'cpu',
+ mode:'duel',
+ selected:[],
+ battle:null,
+ lastSetup:null
+};
+
+function show(id){
+ document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+}
+
+function openMode(c){
+ appState.connection=c;
+ show('mode');
+}
+
+function openOnline(){
+ show('online');
+}
+
+let socket=null;
+let onlinePlayerId=null;
+let onlineRoomCode=null;
+let onlineHostId=null;
+let onlineWaitingAction=false;
+
+/* =========================
+   戦闘メッセージ
+========================= */
+
+let battleMessageQueue=[];
+
+let battleMessageTimer=null;
+
+let battleMessagePlaying=false;
+
+let queuedBattleLogCount=0;  
+let pendingBattleResult=null;
+  
+function isOnlineHost(){
+ return appState.connection==='friend'&&onlinePlayerId===onlineHostId;
+}
+
+function mySide(){
+ if(appState.connection!=='friend')return 0;
+ const b=appState.battle;
+ if(!b)return 0;
+ const i=b.teams.findIndex(t=>t.some(f=>f.ownerId===onlinePlayerId));
+ return i>=0?i:0;
+}
+
+function sendOnline(data){
+ if(socket&&socket.readyState===WebSocket.OPEN){
+  socket.send(JSON.stringify(data));
+ }
+}
+
+function connectOnline(){
+ return new Promise((resolve,reject)=>{
+  if(socket&&socket.readyState===WebSocket.OPEN)return resolve();
+
+  const protocol=location.protocol==='https:'?'wss:':'ws:';
+  socket=new WebSocket(`${protocol}//${location.host}`);
+
+  socket.addEventListener('open',()=>resolve(),{once:true});
+  socket.addEventListener('error',()=>reject(new Error('接続失敗')),{once:true});
+  socket.addEventListener('message',event=>{
+   try{
+    handleOnlineMessage(JSON.parse(event.data));
+   }catch(e){
+    console.error(e);
+   }
   });
+ });
 }
 
-function selectChar(id) {
-  if (selectedChars.includes(id)) {
-    selectedChars = selectedChars.filter(i => i !== id);
-  } else {
-    if (selectedChars.length < maxSelect) {
-      selectedChars.push(id);
-    }
+function handleOnlineMessage(data){
+
+ if(data.type==='room_created'){
+  onlinePlayerId=data.playerId;
+  onlineRoomCode=data.roomCode;
+  onlineHostId=data.hostId;
+  appState.connection='friend';
+
+  document.getElementById('roomInfo').innerHTML=
+   `<p>部屋番号</p>
+    <div class="room">${data.roomCode}</div>
+    <p class="small">友達の参加を待っています…</p>
+    <p id="onlinePlayerCount">参加人数 1人</p>`;
+ }
+
+ if(data.type==='room_joined'){
+  onlinePlayerId=data.playerId;
+  onlineRoomCode=data.roomCode;
+  onlineHostId=data.hostId;
+  appState.connection='friend';
+
+  document.getElementById('roomInfo').innerHTML=
+   `<p>部屋 ${data.roomCode} に参加しました。</p>
+    <p id="onlinePlayerCount">参加人数を確認中…</p>
+    <p class="small">部屋を作った人がモードを選びます。</p>`;
+
+  if(data.mode&&data.mode!=='pending'){
+   appState.mode=data.mode;
+   appState.selected=[];
+   renderSelection();
+   show('select');
   }
-  document.getElementById('select-title').innerText = `キャラクター選択 (${selectedChars.length}/${maxSelect})`;
-  renderCharSelector();
-  
-  const lastSelected = CHARACTERS.find(c => c.id === selectedChars[selectedChars.length - 1]);
-  document.getElementById('select-info').innerHTML = lastSelected ? getCharInfoHtml(lastSelected) : 'キャラを選択してください';
-}
+ }
 
-function getCharInfoHtml(c) {
-  return `<b>${c.name}</b> [${c.species.join(', ')}]<br>
-    HP:${c.hp} メンタル:${c.mental} MP:${c.mp}<br>
-    <b>特性:</b> ${c.traits.join(', ')}<br>
-    <b>専用技:</b> ${c.special.join(', ')}`;
-}
+ if(data.type==='room_state'){
+  onlineHostId=data.hostId;
 
-function confirmSelection() {
-  if (selectedChars.length < maxSelect) {
-    alert(`あと ${maxSelect - selectedChars.length} キャラ選択してください`);
-    return;
+  const el=document.getElementById('onlinePlayerCount');
+  if(el)el.textContent=`参加人数 ${data.count}人`;
+
+  if(!data.started&&data.mode==='pending'&&isOnlineHost()&&data.count>=2){
+   const info=document.getElementById('roomInfo');
+
+   if(info&&!document.getElementById('modeGoBtn')){
+    info.insertAdjacentHTML(
+     'beforeend',
+     '<button id="modeGoBtn" class="btn primary" onclick="show(\'mode\')">ゲームモード選択へ</button>'
+    );
+   }
   }
-  setupBattle();
-}
+ }
 
-// --- リセット・対戦離脱処理 ---
-function quitBattle() {
-  if (confirm("対戦を中断してホームに戻りますか？")) {
-    showScreen('sc-title');
+ if(data.type==='mode_set'){
+  onlineHostId=data.hostId;
+  appState.mode=data.mode;
+  appState.selected=[];
+  renderSelection();
+  show('select');
+ }
+
+ if(data.type==='ready_state'){
+  const ri=document.getElementById('readyInfo');
+
+  if(ri){
+   ri.textContent=`準備完了 ${data.readyCount}/${data.total}`;
   }
-}
 
-function retryBattle() {
-  setupBattle();
-}
+  const me=data.players?.find(p=>p.id===onlinePlayerId);
+  const btn=document.getElementById('startBtn');
 
-function backToCharSelect() {
-  initMode(gameState.mode);
-}
+  if(btn&&me?.ready){
+   btn.disabled=true;
+   btn.textContent='準備完了済み';
+  }
+ }
 
-// --- 戦闘セットアップ ---
-function createFighterState(charId, pName) {
-  const template = CHARACTERS.find(c => c.id === charId);
-  return {
-    pName: pName,
-    id: template.id,
-    name: template.name,
-    maxHp: template.hp,
-    hp: template.hp,
-    maxMen: template.mental,
-    men: template.mental,
-    maxMp: template.mp,
-    mp: template.mp,
-    species: [...template.species],
-    traits: [...template.traits],
-    moves: [...COMMON_SKILLS, ...template.special.map(s => ({ name: s, ...SKILL_DB[s] })), ...template.moves.map(s => ({ name: s, ...SKILL_DB[s] }))],
-    buffs: { physMul: 1, menMul: 1, nextPhysMul: 1, nextMenMul: 1, nextAllMul: 1, resistMenMul: 1 },
-    states: { batouCount: 0, gundam: false, swimming: 0, abareuma: 0, inu: false, maigo: false },
-    isDead: false
+ if(data.type==='battle_start'){
+  onlineHostId=data.hostId;
+  appState.mode=data.mode;
+  onlineWaitingAction=false;
+
+   buildOnlineBattle(data.players,data.mode);
+  show('battle');
+
+  startBattleBgm();
+
+  if(isOnlineHost()){
+   beginTurn();
+   broadcastBattleState();
+  }else{
+   document.getElementById('moves').innerHTML=
+    '<button class="btn" disabled>対戦開始を同期中…</button>';
+  }
+ }
+
+ if(data.type==='action_selected'){
+  const tl=document.getElementById('turnLabel');
+
+  if(tl&&appState.battle){
+   tl.textContent=
+    `ターン ${appState.battle.turn}　行動待ち ${data.selectedCount}/${data.total}`;
+  }
+ }
+
+ if(
+  data.type==='all_actions_selected' &&
+  isOnlineHost() &&
+  appState.battle &&
+  !appState.battle.finished
+ ){
+  runOnlineTurn(data.actions);
+  broadcastBattleState();
+ }
+
+if(data.type==='battle_state'){
+
+ appState.battle=data.battle;
+ onlineWaitingAction=false;
+
+ show('battle');
+
+ /*
+  ホストから終了済み戦闘が届いても
+  即リザルトには移動しない。
+ */
+ if(appState.battle.finished){
+
+  pendingBattleResult={
+   text:
+    appState.battle.winnerOwnerId===
+    onlinePlayerId
+     ?'勝利'
+     :'敗北',
+
+   winnerOwnerId:
+    appState.battle.winnerOwnerId
   };
+
+  renderBattle();
+
+  return;
+ }
+
+ renderBattle();
+
+ maybeAutoOnlineAction();
+}
+ if(data.type==='player_left'){
+  alert('参加者が退出しました。');
+ }
+
+ if(data.type==='error'){
+  alert(data.message);
+ }
 }
 
-function setupBattle() {
-  gameState.players = [];
-  gameState.turn = 1;
+async function createRoom(){
+ try{
+  await connectOnline();
+  sendOnline({type:'create_room'});
+  document.getElementById('roomInfo').innerHTML='<p>部屋を作成しています…</p>';
+ }catch(e){
+  alert('オンラインサーバーに接続できません。');
+ }
+}
 
-  document.getElementById('end-game-nav').style.display = 'none';
-  document.querySelector('.cmd-area').style.display = 'flex';
-  document.getElementById('battle-log').innerHTML = '';
+async function joinRoom(){
+ const v=document.getElementById('roomInput').value.trim();
+
+ if(!/^\d{4}$/.test(v)){
+  return alert('4桁の部屋番号を入力してください。');
+ }
+
+ try{
+  await connectOnline();
+  sendOnline({type:'join_room',roomCode:v});
+  document.getElementById('roomInfo').innerHTML='<p>部屋に接続しています…</p>';
+ }catch(e){
+  alert('オンラインサーバーに接続できません。');
+ }
+}
+
+function setMode(m){
+
+ if(appState.connection==='friend'){
+  if(!isOnlineHost()){
+   return alert('ゲームモードは部屋を作った人が選択します。');
+  }
+
+  sendOnline({
+   type:'set_mode',
+   mode:m
+  });
+
+  return;
+ }
+
+ appState.mode=m;
+ appState.selected=[];
+ renderSelection();
+ show('select');
+}
+
+function renderSelection(){
+
+ const need=appState.mode==='team3'?3:1;
+ const online=appState.connection==='friend';
+
+ document.getElementById('selectGuide').textContent=
+  appState.mode==='ffa4'
+   ?(
+     online
+      ?'自分のキャラを1人選択。オンラインではCPなし・参加人数上限なし。'
+      :'自分のキャラを1人選択。残り3人はCP。'
+    )
+   :`自分側 ${need}人を選択`;
+
+ const sb=document.getElementById('startBtn');
+
+ if(sb){
+  sb.textContent=online?'準備完了':'対戦開始';
+  sb.disabled=false;
+ }
+
+ const ri=document.getElementById('readyInfo');
+
+ if(ri){
+  ri.textContent='';
+ }
+
+ const g=document.getElementById('charGrid');
+ g.innerHTML='';
+
+ chars.forEach((c,i)=>{
+  const d=document.createElement('div');
+
+  d.className=
+   'card character'+
+   (appState.selected.includes(i)?' selected':'');
+
+ const assets=
+ getCharacterAssets(c.name);
+
+d.innerHTML=
+ `<div class="select-character-head">
+
+   ${
+    assets.icon
+     ?`
+      <img
+       class="select-character-icon"
+       src="${assets.icon}"
+       alt="${c.name}"
+      >
+     `
+     :`
+      <div class="select-character-icon-placeholder">
+       ${c.name}
+      </div>
+     `
+   }
+
+   <h3>${c.name}</h3>
+
+  </div>
+
+   <div class="stats">
+    <div class="stat">HP<br>${c.hp}</div>
+    <div class="stat">精神<br>${c.mental}</div>
+    <div class="stat">MP<br>${c.mp}</div>
+  </div>
+
+  <div>
+    ${c.races.map(x=>`<span class="tag">${x}</span>`).join('')}
+  </div>
+
+  <div class="small">
+    特性: ${c.traits.join(' / ')}
+  </div>`;
+
+d.onclick=()=>selectChar(i);
+
+attachTip(
+ d,
+ characterDetail(c)
+);
+
+  g.appendChild(d);
+ });
+}
+
+function selectChar(i){
+
+ const need=appState.mode==='team3'?3:1;
+
+ if(appState.selected.includes(i)){
+  appState.selected=
+   appState.selected.filter(x=>x!==i);
+
+ }else if(appState.selected.length<need){
+  appState.selected.push(i);
+
+ }else{
+  appState.selected[appState.selected.length-1]=i;
+ }
+
+ renderSelection();
+}
+
+function characterDetail(c){
+ return `${c.name}
+HP ${c.hp} / 精神 ${c.mental} / MP ${c.mp}
+種族: ${c.races.join(', ')}
+特性: ${c.traits.join(', ')}
+技: ${Object.keys({...commonMoves,...c.moves}).join(', ')}`;
+}
+
+function attachTip(el,text){
+
+ let timer;
+ const tip=document.getElementById('tooltip');
+
+ el.addEventListener('mouseenter',e=>{
+  if(matchMedia('(hover:hover)').matches){
+   tip.textContent=text;
+   tip.style.display='block';
+   moveTip(e);
+  }
+ });
+
+ el.addEventListener('mousemove',moveTip);
+
+ el.addEventListener('mouseleave',()=>{
+  tip.style.display='none';
+ });
+
+ el.addEventListener('touchstart',()=>{
+  timer=setTimeout(()=>{
+   tip.textContent=text;
+   tip.style.left='12px';
+   tip.style.bottom='12px';
+   tip.style.top='auto';
+   tip.style.display='block';
+  },450);
+ },{passive:true});
+
+ el.addEventListener('touchend',()=>{
+  clearTimeout(timer);
+  setTimeout(()=>{
+   tip.style.display='none';
+  },700);
+ });
+}
+
+function moveTip(e){
+ const tip=document.getElementById('tooltip');
+
+ tip.style.left=
+  Math.min(innerWidth-370,e.clientX+15)+'px';
+
+ tip.style.top=
+  Math.min(innerHeight-220,e.clientY+15)+'px';
+}
+
+function cloneFighter(c,side,index=0){
+ return {
+  base:c,
+  name:c.name,
+ maxHp:c.hp,
+hp:c.hp,
+
+displayHp:c.hp,
+displayMaxHp:c.hp,
+
+maxMental:c.mental,
+mental:c.mental,
+
+displayMental:c.mental,
+displayMaxMental:c.mental,
+  maxMp:c.mp,
+  mp:c.mp,
+  side,
+  index,
+  alive:true,
+  guard:0,
+dodging:false,
+parthianDodging:false,
+nextP:1,
+nextM:1,
+
+physicalBuff:1,
+mentalBuff:1,
+
+growthP:1,
+growthM:1,
+
+dualPhysical:1,
+dualMental:1,
+
+continentalStacks:0,
+veilBoost:0,
+parasiteStacks:0,
+
+uniqueHpUsed:false,
+uniqueMentalUsed:false,
+
+halalMentalMul:1,
+
+plannedAction:null,
+mentalTakenMul:1,
+  gundam:false,
+  haruka:false,
+  remi:false,
+  mpRegenLock:0,
+  rampage:0,
+  mentalResistStacks:0,
+  verbalDot:0,
+  entangled:0,
+  swimming:false,
+  skip:false,
+  traits:[...c.traits],
+  races:[...c.races],
+  moves:{...commonMoves,...c.moves},
+  lastDebuffs:[]
+ };
+}
+
+async function startBattle(){
+
+ const need=
+  appState.mode==='team3'?3:1;
+
+ if(appState.selected.length<need){
+  return alert(
+   `キャラを${need}人選択してください。`
+  );
+ }
+
+ /*
+  =========================
+  オンライン
+  =========================
+ */
+
+ if(appState.connection==='friend'){
+
+  const btn=
+   document.getElementById('startBtn');
+
+  if(btn){
+   btn.disabled=true;
+   btn.textContent='準備完了済み';
+  }
+
+  const ri=
+   document.getElementById('readyInfo');
+
+  if(ri){
+   ri.textContent='準備完了！';
+  }
+
+  /*
+   ready.mp3が終わるまで待つ
+  */
+  await playReadyAndWait();
+
+  /*
+   鳴り終わってから
+   準備完了をサーバーへ送信
+  */
+  sendOnline({
+   type:'ready',
+   selections:[...appState.selected]
+  });
+
+  if(ri){
+   ri.textContent=
+    'ほかの参加者を待っています…';
+  }
+
+  return;
+ }
+
+
+ /*
+  =========================
+  CPU戦
+  =========================
+ */
+
+ const btn=
+  document.getElementById('startBtn');
+
+ if(btn){
+  btn.disabled=true;
+ }
+
+ /*
+  ready.mp3が終わるまで
+  キャラ選択画面のまま待つ
+ */
+ await playReadyAndWait();
+
+
+ /*
+  =========================
+  CPキャラ決定
+  =========================
+ */
+
+ const used=
+  new Set(appState.selected);
+
+const pool=
+  chars
+   .map((_,i)=>i)
+   .filter(
+    i=>
+     !used.has(i)
+   );
+ shuffle(pool);
+
+
+ /*
+  =========================
+  戦闘データ作成
+  =========================
+ */
+
+ let b={
+  turn:1,
+  mode:appState.mode,
+  teams:[],
+  active:[0,0],
+   displayActive:[0,0],
+  log:[],
+  finished:false
+ };
+
+
+ /*
+  タイマン
+ */
+ if(appState.mode==='duel'){
+
+  b.teams=[
+   [
+    cloneFighter(
+     chars[appState.selected[0]],
+     0
+    )
+   ],
+   [
+    cloneFighter(
+     chars[pool[0]],
+     1
+    )
+   ]
+  ];
+
+
+ /*
+  3 vs 3
+ */
+ }else if(appState.mode==='team3'){
+
+  b.teams=[
+   appState.selected.map(
+    (i,j)=>
+     cloneFighter(
+      chars[i],
+      0,
+      j
+     )
+   ),
+
+   pool.slice(0,3).map(
+    (i,j)=>
+     cloneFighter(
+      chars[i],
+      1,
+      j
+     )
+   )
+  ];
+
+
+ /*
+  乱闘
+ */
+ }else{
+
+  b.teams=[
+   [
+    cloneFighter(
+     chars[appState.selected[0]],
+     0
+    )
+   ],
+   [
+    cloneFighter(
+     chars[pool[0]],
+     1
+    )
+   ],
+   [
+    cloneFighter(
+     chars[pool[1]],
+     2
+    )
+   ],
+   [
+    cloneFighter(
+     chars[pool[2]],
+     3
+    )
+   ]
+  ];
+
+  b.active=[
+   0,
+   0,
+   0,
+   0
+  ];
+ }
+
+
+ /*
+  =========================
+  戦闘開始
+  =========================
+ */
+
+ appState.battle=b;
+
+ resetBattleMessages();
+
+ appState.lastSetup={
+  ...appState,
+  selected:[...appState.selected],
+  battle:null,
+  lastSetup:null
+ };
+
+ /*
+  readyが完全に終了した後なので、
+  ここで初めて戦闘画面へ移動
+ */
+chooseBattleBackground();
+
+show('battle');
+
+startBattleBgm();
+
+beginTurn();
+}
+function buildOnlineBattle(players,mode){
+
+ const teams=
+  players.map(
+   (p,side)=>
+    p.selections.map(
+     (ci,j)=>{
+      const f=
+       cloneFighter(
+        chars[ci],
+        side,
+        j
+       );
+
+      f.ownerId=p.id;
+
+      return f;
+     }
+    )
+  );
+
+ appState.battle={
+  turn:1,
+  mode,
+  teams,
+  active:teams.map(()=>0),
+  log:[],
+  finished:false,
+  winnerOwnerId:null
+ };
+  resetBattleMessages();
+}
+
+function aliveOnlinePlayerIds(){
+
+ const b=appState.battle;
+
+ return b.teams
+  .filter(
+   t=>t.some(f=>f.alive)
+  )
+  .map(
+   t=>t.find(Boolean)?.ownerId
+  )
+  .filter(Boolean);
+}
+
+function broadcastBattleState(){
+
+ if(
+  !isOnlineHost() ||
+  !appState.battle
+ ){
+  return;
+ }
+
+ sendOnline({
+  type:'battle_state',
+  battle:appState.battle,
+  alivePlayerIds:
+   aliveOnlinePlayerIds()
+ });
+}
+
+function submitOnlineAction(action){
+
+ if(
+  onlineWaitingAction ||
+  !appState.battle ||
+  appState.battle.finished
+ ){
+  return;
+ }
+
+ onlineWaitingAction=true;
+
+ sendOnline({
+  type:'action',
+  action
+ });
+
+ renderMoves();
+}
+
+function maybeAutoOnlineAction(){
+
+ if(
+  appState.connection!=='friend' ||
+  onlineWaitingAction ||
+  !appState.battle ||
+  appState.battle.finished
+ ){
+  return;
+ }
+
+ const f=
+  activeF(mySide());
+
+ if(
+  f &&
+  f.alive &&
+  f.swimming
+ ){
+  setTimeout(
+   ()=>submitOnlineAction({type:'none'}),
+   0
+  );
+ }
+}
+
+function runOnlineTurn(actions){
+
+ const b=appState.battle;
+
+ if(!b||b.finished){
+  return;
+ }
+
+ let acts=[];
+
+ for(
+  let s=0;
+  s<b.teams.length;
+  s++
+ ){
+  const f=activeF(s);
+
+  if(!f||!f.alive){
+   continue;
+  }
+
+  const a=
+   actions[f.ownerId]||
+   {type:'none'};
+
+  acts.push({f,a});
+ }
+
+ prepareTurnActions(acts);
+
+acts=sortTurnActions(acts);
+ for(const x of acts){
+
+  if(!x.f.alive){
+   continue;
+  }
+
+  let targets=
+ livingEnemies(x.f);
+ 
+
+  executeAction(
+   x.f,
+   x.a,
+   targets
+  );
+
+  checkDeaths();
+
+  if(b.finished){
+   break;
+  }
+ }
+
+ if(!b.finished){
+  endTurn();
+ }
+}
+
+function shuffle(a){
+ for(
+  let i=a.length-1;
+  i>0;
+  i--
+ ){
+  const j=
+   Math.floor(
+    Math.random()*(i+1)
+   );
+
+  [a[i],a[j]]=
+   [a[j],a[i]];
+ }
+
+ return a;
+}
+
+function activeF(side){
+ const b=appState.battle;
+
+ return b.teams[side]?.[
+  b.active[side] || 0
+ ] || null;
+}
+
+function allActive(){
+ const b=appState.battle;
+
+ return b.teams
+  .map(
+   (t,i)=>t[b.active[i]||0]
+  )
+  .filter(Boolean);
+}
+
+function livingEnemies(f){
+
+ return allActive().filter(
+  t=>
+   t &&
+   t!==f &&
+   t.alive &&
+   t.hp>0 &&
+   t.mental>0 &&
+   t.side!==f.side
+ );
+}
+
+function randomLivingEnemy(f){
+
+ const enemies=
+  livingEnemies(f);
+
+ if(!enemies.length){
+  return null;
+ }
+
+ return enemies[
+  Math.floor(
+   Math.random()*enemies.length
+  )
+ ];
+}
+
+function beginTurn(){
+
+ const b=appState.battle;
+
+ if(b.finished){
+  return;
+ }
+
+ allActive().forEach(f=>{
+
+  if(!f.alive){
+   return;
+  }
+
+   /*
+ HG：
+ 場にいる「おんな」以外の誰か1人から
+ 毎ターンHP・精神を5吸収
+*/
+if(f.traits.includes('HG')){
+
+ const candidates=
+  allActive().filter(
+   t=>
+    t!==f &&
+    t.alive &&
+    !t.races.includes('おんな')
+  );
+
+ if(candidates.length){
+
+  const t=
+   candidates[
+    Math.floor(
+     Math.random()*candidates.length
+    )
+   ];
+
+  const hpTake=
+   Math.min(
+    5,
+    Math.max(0,t.hp)
+   );
+
+  const mentalTake=
+   Math.min(
+    5,
+    Math.max(0,t.mental)
+   );
+
+  t.hp-=hpTake;
+  t.mental-=mentalTake;
+
+  f.hp=
+   Math.min(
+    f.maxHp,
+    f.hp+hpTake
+   );
+
+  f.mental=
+   Math.min(
+    f.maxMental,
+    f.mental+mentalTake
+   );
+
+  log(
+   `${f.name}はHGで${t.name}からHP${hpTake}・精神${mentalTake}を吸収した！`,
+   'heal',
+   f.side,
+   'heal',
+   statSnapshot(f)
+  );
+
+  log(
+   `${t.name}はHGでHP${hpTake}・精神${mentalTake}を吸収された！`,
+   'damage',
+   t.side,
+   'damage',
+   statSnapshot(t)
+  );
+ }
+}
+/*
+ たいりくのはしゃ
+ 毎ターン物理攻撃力×1.2
+ 最大4回まで重複
+*/
+if(
+ f.traits.includes('たいりくのはしゃ') &&
+ (f.continentalStacks||0)<4
+){
+
+ f.continentalStacks++;
+
+ log(
+  `${f.name}のたいりくのはしゃ！ 物理攻撃力×${Math.pow(1.2,f.continentalStacks).toFixed(2)}`,
+  'buff',
+  f.side,
+  'buff'
+ );
+}
+   /*
+ ターン開始時MP回復
+*/
+let regen=
+ 1+
+ (
+  f.traits.includes('めんざいたいしつ')
+   ?1
+   :0
+ );
+
+/*
+ そうせいおう
+
+ ・毎ターンMP上限+1
+ ・そのターンのMP回復量は1か2を毎回抽選
+*/
+if(f.traits.includes('そうせいおう')){
+
+ // 毎ターンMP上限+1
+ f.maxMp+=1;
+
+ // 通常時は必ず1～2回復
+ if((f.mpRegenLock||0)>0){
+
+  // しめあげる中だけ0～1回復
+  regen=
+   Math.random()<P.normal
+    ?1
+    :0;
+
+ }else{
+
+  regen=
+   Math.random()<P.normal
+    ?2
+    :1;
+ }
+}
+
+else if((f.mpRegenLock||0)>0){
+
+ // 通常キャラはしめあげる中、回復量1
+ regen=1;
+}
+
+f.mp=
+ Math.min(
+  f.maxMp,
+  f.mp+regen
+ );
+
+
+if((f.mpRegenLock||0)>0){
+ f.mpRegenLock--;
+}
+  /*
+ むしばダメージ
+*/
+if(f.traits.includes('むしば')){
+
+ directDamage(
+  f,
+  2,
+  2,
+  'むしば'
+ );
+}
+
+/*
+ ゆうまのむしば感染
+
+ ゆうまが場にいて、
+ 相手がまだむしばではなく、
+ 「しかい」も持っていない場合、
+ 50%で感染する
+*/
+if(
+ f.name==='ゆうま' &&
+ f.traits.includes('むしば')
+){
+
+ for(const t of livingEnemies(f)){
+
+  if(
+   !t.traits.includes('むしば') &&
+   !t.traits.includes('しかい') &&
+   Math.random()<P.normal
+  ){
+
+   t.traits.push('むしば');
+
+   log(
+    `${t.name}にむしばが感染した！`,
+    'debuff',
+    t.side,
+    'debuff'
+   );
+  }
+ }
+}
+
+  if(
+ f.traits.includes('じあいのこころ')
+){
+
+ const before=f.mental;
+
+ f.mental=
+  Math.min(
+   f.maxMental,
+   f.mental+5
+  );
+
+ if(f.mental>before){
+
+  log(
+   `${f.name}はじあいのこころで精神が${f.mental-before}回復した！`,
+   'heal',
+   f.side,
+   'heal',
+   statSnapshot(f)
+  );
+ }
+}
+
+  if(f.haruka){
+
+ const before=f.mental;
+
+ f.mental=
+  Math.min(
+   f.maxMental,
+   f.mental+5
+  );
+
+ if(f.mental>before){
+
+  log(
+   `${f.name}ははるかで精神が${f.mental-before}回復した！`,
+   'heal',
+   f.side,
+   'heal',
+   statSnapshot(f)
+  );
+ }
+}
+  if(
+ f.traits.includes('ちゅうそつのいでんし') &&
+ Math.random()<P.normal
+){
+
+ const before=f.hp;
+
+ f.hp=
+  Math.min(
+   f.maxHp,
+   f.hp+5
+  );
+
+ if(f.hp>before){
+
+  log(
+   `${f.name}はちゅうそつのいでんしでHPが${f.hp-before}回復した！`,
+   'heal',
+   f.side,
+   'heal',
+   statSnapshot(f)
+  );
+ }
+}
+
+  if(
+   f.traits.includes('できん')
+  ){
+   f.mentalBuff*=1.17;
+  }
+
+// にじゅうじんかく
+f.dualPhysical = 1;
+f.dualMental = 1;
+
+if(f.traits.includes('にじゅうじんかく')){
+  if(Math.random() < 0.5){
+    f.dualPhysical = 1.2;
+    f.dualMental = 0.7;
+  }else{
+    f.dualPhysical = 0.7;
+    f.dualMental = 1.2;
+  }
+}
+   
+ if(
+ f.traits.includes('むげん成長')
+){
+
+ f.growthP*=1.08;
+ f.growthM*=1.08;
+
+ f.maxHp-=4;
+ f.hp=Math.min(
+  f.hp,
+  f.maxHp
+ );
+
+ f.maxMp+=1;
+
+ log(
+  `${f.name}はむげん成長した！ 最大HPが4減少した`,
+  'buff',
+  f.side,
+  'buff',
+  statSnapshot(f)
+ );
+}
+
+  if(f.verbalDot>0){
+   directDamage(
+    f,
+    0,
+    5*f.verbalDot,
+    'ばとう'
+   );
+  }
+   if(f.parasiteStacks>0){
+
+ directDamage(
+  f,
+  5*f.parasiteStacks,
+  5*f.parasiteStacks,
+  `きせい×${f.parasiteStacks}`
+ );
+}
+ });
   
-  if (gameState.mode === '1v1') {
-    gameState.players.push({ id: 0, active: createFighterState(selectedChars[0], 'P1'), bench: [] });
-    const cpChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)].id;
-    gameState.players.push({ id: 1, active: createFighterState(cpChar, 'CP'), bench: [], isCp: true });
-  } else if (gameState.mode === '3v3') {
-    const p1Active = createFighterState(selectedChars[0], 'P1');
-    const p1Bench = [createFighterState(selectedChars[1], 'P1'), createFighterState(selectedChars[2], 'P1')];
-    gameState.players.push({ id: 0, active: p1Active, bench: p1Bench });
 
-    const shuffled = [...CHARACTERS].sort(() => 0.5 - Math.random());
-    const cpActive = createFighterState(shuffled[0].id, 'CP');
-    const cpBench = [createFighterState(shuffled[1].id, 'CP'), createFighterState(shuffled[2].id, 'CP')];
-    gameState.players.push({ id: 1, active: cpActive, bench: cpBench, isCp: true });
-  } else if (gameState.mode === '4p') {
-    gameState.players.push({ id: 0, active: createFighterState(selectedChars[0], 'P1'), bench: [] });
-    for (let i = 1; i < 4; i++) {
-      const cpChar = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)].id;
-      gameState.players.push({ id: i, active: createFighterState(cpChar, `CP${i}`), bench: [], isCp: true });
-    }
-  }
+ applyGlobalStart();
+ checkDeaths();
+ renderBattle();
+ log(`--- ターン ${b.turn} ---`);
 
-  showScreen('sc-battle');
-  log("=== バトル開始 ===");
-  startTurn();
+ if(
+  !b.finished &&
+  appState.connection==='cpu' &&
+  activeF(0)?.swimming
+ ){
+  setTimeout(()=>{
+   const cur=
+    appState.battle;
+
+   if(
+    cur &&
+    !cur.finished &&
+    activeF(0)?.swimming
+   ){
+    runTurn({type:'none'});
+   }
+  },0);
+ }
+
+ if(
+  !b.finished &&
+  appState.connection==='friend'
+ ){
+  maybeAutoOnlineAction();
+ }
 }
 
-// --- ターンの進行 ---
-function startTurn() {
-  log(`--- ターン ${gameState.turn} ---`);
-  
-  gameState.players.forEach(p => {
-    const f = p.active;
-    if (f.isDead) return;
+function applyGlobalStart(){
 
-    let mpRec = 1;
-    if (f.traits.includes('じーぴーえー')) mpRec += 1;
-    f.mp = Math.min(f.maxMp, f.mp + mpRec);
+ const acts=allActive();
 
-    if (f.traits.includes('むげん成長')) {
-      f.maxHp = Math.round(f.maxHp * 1.1);
-      f.maxMen = Math.round(f.maxMen * 1.1);
-      if (gameState.turn % 2 === 0) f.maxMp += 1;
+ for(const src of acts){
+
+  if(src.traits.includes('あくしゅう')){
+
+   for(const t of acts){
+
+    if(t!==src&&t.alive){
+    applyDamage(
+ src,
+ t,
+ {
+  mental:2,
+  tags:['におい']
+ },
+ true
+);
     }
+   }
+  }
+ }
 
-    if (f.traits.includes('むしば')) {
-      f.hp -= 2; f.men -= 2;
-      log(`${f.name}はむしばの痛みに耐えている(HP-2, 精神-2)`);
-    }
+ for(const src of acts){
 
-    if (f.traits.includes('じあいのこころ')) f.men = Math.min(f.maxMen, f.men + 5);
-    if (f.traits.includes('ちゅうそつのいでんし') && Math.random() < 0.5) f.hp = Math.min(f.maxHp, f.hp + 5);
+  if(src.traits.includes('うわきしょう')){
 
-    if (f.traits.includes('あくしゅう')) {
-      gameState.players.forEach(op => {
-        if (!op.active.isDead) op.active.men -= 2;
-      });
-    }
+   const women=
+    acts.filter(
+     x=>
+      x!==src &&
+      x.races.includes('おんな') &&
+      x.alive
+    );
 
-    if (f.traits.includes('うわきしょう')) {
-      let femaleCount = 0;
-      gameState.players.forEach(op => {
-        if (op !== p && op.active.species.includes(SPECIES.ONNA)) femaleCount++;
-      });
-      if (femaleCount > 0) {
-        f.mp = Math.min(f.maxMp, f.mp + femaleCount);
-        if (Math.random() < 0.5) {
-          if (Math.random() < 0.5) f.hp -= femaleCount * 5; else f.men -= femaleCount * 5;
-          log(`${f.name}は浮気性が祟ってダメージを受けた！`);
-        }
-      }
-    }
+   for(const w of women){
 
-    if (f.states.batouCount > 0) {
-      const d = f.states.batouCount * 5;
-      f.men -= d;
-      log(`${f.name}は罵倒により精神に ${d} ダメージ！`);
-    }
+    const take=
+     Math.min(7,w.hp);
 
-    checkDeath(f);
+    w.hp-=take;
+
+    src.hp=
+     Math.min(
+      src.maxHp,
+      src.hp+take
+     );
+   }
+
+   if(
+    women.length &&
+    Math.random()<P.normal
+   ){
+    if(
+ women.length &&
+ Math.random()<P.normal
+){
+
+ if(Math.random()<.5){
+
+  directDamage(
+   src,
+   5*women.length,
+   0,
+   'うわきしょう反動'
+  );
+
+ }else{
+
+  directDamage(
+   src,
+   0,
+   5*women.length,
+   'うわきしょう反動'
+  );
+ }
+}
+   }
+  }
+ }
+}
+  function getCharacterAssets(name){
+
+ return (
+  battleAssets.characters[name] ||
+  {
+   player:'',
+   enemy:'',
+   icon:''
+  }
+ );
+}
+
+function summonedObjectHtml(
+ fighter,
+ type
+){
+
+ if(!fighter){
+  return '';
+ }
+
+ let object=null;
+ let name='';
+
+
+ /*
+  ガンダム
+ */
+ if(fighter.gundam){
+
+  object=
+   battleAssets.objects?.gundam;
+
+  name='ガンダム';
+ }
+
+
+ /*
+  はるか
+ */
+ else if(fighter.haruka){
+
+  object=
+   battleAssets.objects?.haruka;
+
+  name='はるか';
+ }
+   else if(fighter.remi){
+
+  object=
+   battleAssets.objects?.remi;
+
+  name='れみ';
+ }
+
+
+ /*
+  置物なし
+ */
+ if(!object){
+  return '';
+ }
+
+
+ /*
+  自分側・敵側で画像を分ける
+ */
+ const src=
+  type==='player'
+   ?object.player
+   :object.enemy;
+
+
+ if(!src){
+  return '';
+ }
+
+
+ return `
+  <div
+   class="summoned-object"
+   title="${name}"
+  >
+   <img
+    src="${src}"
+    alt="${name}"
+   >
+  </div>
+ `;
+}
+
+
+function spriteHtml(
+ fighter,
+ type
+){
+
+ const assets=
+  getCharacterAssets(
+   fighter.name
+  );
+
+ const src=
+  type==='player'
+   ?assets.player
+   :assets.enemy;
+
+
+ /*
+  キャラクター本体
+ */
+ let mainHtml='';
+
+ if(src){
+
+  mainHtml=`
+   <img
+    class="battle-sprite"
+    src="${src}"
+    alt="${fighter.name}"
+   >
+  `;
+
+ }else{
+
+  mainHtml=`
+   <div class="sprite-placeholder">
+    ${fighter.name}<br>
+    ${type==='player'
+     ?'自分側立ち絵'
+     :'敵側立ち絵'}
+   </div>
+  `;
+ }
+
+
+ /*
+  置物
+ */
+ const objectHtml=
+  summonedObjectHtml(
+   fighter,
+    type
+  );
+
+
+ return `
+  <div class="fighter-with-object">
+
+   <div class="fighter-main">
+    ${mainHtml}
+   </div>
+
+   ${objectHtml}
+
+  </div>
+ `;
+}
+
+function iconHtml(fighter){
+
+ const assets=
+  getCharacterAssets(
+   fighter.name
+  );
+
+ if(assets.icon){
+
+  return `
+   <img
+    class="hud-icon"
+    src="${assets.icon}"
+    alt="${fighter.name}"
+   >
+  `;
+ }
+
+ return `
+  <div class="hud-icon-placeholder">
+   ${fighter.name}<br>
+   アイコン
+  </div>
+ `;
+}
+  function miniStat(
+ name,
+ value,
+ max,
+ type
+){
+
+ const safeMax=
+  Math.max(
+   1,
+   max
+  );
+
+ const percent=
+  Math.max(
+   0,
+   Math.min(
+    100,
+    value/safeMax*100
+   )
+  );
+
+ return `
+  <div class="mini-stat">
+
+   <span>
+    ${name}
+   </span>
+
+   <div class="mini-bar">
+    <div
+     class="mini-fill ${type}"
+     style="width:${percent}%"
+    ></div>
+   </div>
+
+   <span class="stat-number">
+    ${Math.max(
+     0,
+     Math.round(value)
+    )}/${Math.round(max)}
+   </span>
+
+  </div>
+ `;
+}
+function resetBattleMessages(){
+
+ battleMessageQueue=[];
+
+ battleMessagePlaying=false;
+
+ queuedBattleLogCount=0;
+
+pendingBattleResult=null;
+
+ if(battleMessageTimer){
+
+  clearTimeout(
+   battleMessageTimer
+  );
+
+  battleMessageTimer=null;
+ }
+
+ const text=
+  document.getElementById(
+   'battleMessageText'
+  );
+
+ if(text){
+  text.textContent=
+   '対戦開始！';
+ }
+}
+
+
+function syncBattleMessages(){
+
+ const b=
+  appState.battle;
+
+ if(!b){
+  return;
+ }
+
+ if(
+  b.log.length<
+  queuedBattleLogCount
+ ){
+  queuedBattleLogCount=0;
+ }
+
+ while(
+ queuedBattleLogCount<
+ b.log.length
+){
+
+ battleMessageQueue.push(
+  b.log[
+   queuedBattleLogCount
+  ]
+ );
+
+ queuedBattleLogCount++;
+}
+
+ if(
+  !battleMessagePlaying
+ ){
+  showNextBattleMessage();
+ }
+}
+
+
+function showNextBattleMessage(){
+
+ /*
+  =========================
+  キューが空
+  =========================
+ */
+
+ if(!battleMessageQueue.length){
+
+  battleMessagePlaying=false;
+  battleMessageTimer=null;
+
+  /*
+   戦闘終了済みなら、
+   最後の「倒れた。」をクリックしたあと
+   リザルトへ進む
+  */
+  if(pendingBattleResult){
+
+   const result=
+    pendingBattleResult;
+
+   pendingBattleResult=null;
+
+   stopBattleBgm();
+
+   document.getElementById(
+    'resultText'
+   ).textContent=
+    result.text;
+
+   if(result.text==='勝利'){
+
+ playBattleSound(
+  'victory'
+ );
+
+}else{
+
+ sfx(
+  180,
+  .18
+ );
+}
+
+   show('result');
+
+   return;
+  }
+
+  renderMoves();
+
+  return;
+ }
+
+
+ /*
+  =========================
+  次のメッセージを表示
+  =========================
+ */
+
+ battleMessagePlaying=true;
+
+ const message=
+  battleMessageQueue.shift();
+
+ const box=
+  document.getElementById(
+   'battleMessageText'
+  );
+
+ if(box){
+
+  box.textContent=
+   typeof message==='string'
+    ?message
+    :message.text;
+ }
+
+
+ /*
+  =========================
+  メッセージに同期した処理
+  =========================
+ */
+
+ if(
+  typeof message==='object'
+ ){
+
+  /*
+   このダメージが発生した
+   「その瞬間」のHP・精神へ
+   表示ゲージを進める
+  */
+ if(
+ message.displayStats &&
+ message.side!==null
+){
+
+ const b=appState.battle;
+
+ if(b){
+
+  const statSide=
+ message.displayStats.side ??
+ message.side;
+
+const statIndex=
+ message.displayStats.index;
+
+const fighter=
+ statIndex!==undefined &&
+ statIndex!==null
+  ? b.teams[statSide]?.[statIndex]
+  : b.teams[statSide]?.[
+      b.active[statSide] || 0
+    ];
+
+  if(fighter){
+
+   fighter.displayHp=
+    message.displayStats.hp;
+
+   fighter.displayMental=
+    message.displayStats.mental;
+
+   if(
+    message.displayStats.maxHp!==undefined
+   ){
+    fighter.displayMaxHp=
+     message.displayStats.maxHp;
+   }
+
+   if(
+    message.displayStats.maxMental!==undefined
+   ){
+    fighter.displayMaxMental=
+     message.displayStats.maxMental;
+   }
+  }
+
+  /*
+   まず画面を更新する
+  */
+  renderBattle();
+
+ }
+}
+
+  /*
+   =========================
+   エフェクト
+   =========================
+  */
+
+ if(
+ message.effect &&
+ message.side!==null
+){
+
+ const fighter=
+  allActive().find(
+   f=>
+    f.side===
+    message.side
+  );
+
+ if(fighter){
+
+  /*
+   renderBattle()によるDOM更新が完了した
+   次の描画タイミングでエフェクト開始
+  */
+  requestAnimationFrame(()=>{
+
+   requestAnimationFrame(()=>{
+
+    animateF(
+     fighter,
+     message.effect
+    );
+
+   });
+
   });
 
-  gameState.pendingActions = {};
-  promptPlayerAction(0);
+ }
 }
 
-function promptPlayerAction(pIndex) {
-  if (pIndex >= gameState.players.length) {
-    resolveTurn();
-    return;
-  }
 
-  const p = gameState.players[pIndex];
-  if (p.active.isDead) {
-    promptPlayerAction(pIndex + 1);
-    return;
-  }
+  /*
+   =========================
+   効果音
+   =========================
+  */
 
-  if (p.isCp) {
-    const validMoves = p.active.moves.filter(m => (m.mp || 0) <= p.active.mp);
-    const move = validMoves[Math.floor(Math.random() * validMoves.length)];
-    const targets = gameState.players.filter(tp => tp !== p && !tp.active.isDead);
-    const target = targets[Math.floor(Math.random() * targets.length)];
+  if(message.sound){
 
-    gameState.pendingActions[p.id] = { actor: p, move: move, target: target };
-    promptPlayerAction(pIndex + 1);
-  } else {
-    gameState.activePlayerIndex = pIndex;
-    renderBattleScreen();
-    renderCommandUI(p);
+   playBattleSound(
+    message.sound
+   );
   }
+ }
+
+
+ /*
+  以前のタイマーが残っていたら削除
+ */
+ if(battleMessageTimer){
+
+  clearTimeout(
+   battleMessageTimer
+  );
+
+  battleMessageTimer=null;
+ }
+
+
+ /*
+  =========================
+  戦闘終了時
+
+  最後の「○○は倒れた。」では
+  自動送りしない。
+  クリックを待つ。
+  =========================
+ */
+
+ if(
+  pendingBattleResult &&
+  battleMessageQueue.length===0
+ ){
+
+  battleMessageTimer=null;
+
+  return;
+ }
+
+
+ /*
+  =========================
+  通常メッセージ
+  2.8秒後に次へ
+  =========================
+ */
+
+ battleMessageTimer=
+  setTimeout(
+   ()=>{
+
+    battleMessagePlaying=false;
+
+    showNextBattleMessage();
+
+   },
+   2800
+  );
+}
+function advanceBattleMessage(){
+
+ if(battleMessageTimer){
+
+  clearTimeout(
+   battleMessageTimer
+  );
+
+  battleMessageTimer=null;
+ }
+
+ battleMessagePlaying=false;
+
+ showNextBattleMessage();
 }
 
-function selectPlayerMove(move) {
-  const p = gameState.players[gameState.activePlayerIndex];
-  const enemies = gameState.players.filter(tp => tp !== p && !tp.active.isDead);
-  if (enemies.length === 1) {
-    gameState.pendingActions[p.id] = { actor: p, move: move, target: enemies[0] };
-    promptPlayerAction(gameState.activePlayerIndex + 1);
-  } else {
-    renderTargetUI(move, enemies);
+  function battleMessageBusy(){
+
+ return (
+  battleMessagePlaying ||
+  battleMessageQueue.length>0
+ );
+}
+
+function renderBattle(){
+
+ const b=
+  appState.battle;
+
+ if(!b){
+  return;
+ }
+
+ const my=
+  activeF(
+   mySide()
+  );
+
+ const enemies=
+  allActive()
+   .filter(
+    f=>
+     f &&
+     f.side!==mySide()
+   );
+
+
+ /* モード */
+
+ document.getElementById(
+  'modeLabel'
+ ).textContent=
+
+  b.mode==='duel'
+   ?'タイマン'
+
+   :b.mode==='team3'
+    ?'3 vs 3'
+
+    :appState.connection==='friend'
+     ?'オンライン乱闘'
+     :'4人乱闘';
+
+
+ document.getElementById(
+  'turnLabel'
+ ).textContent=
+  `ターン ${b.turn}`;
+
+
+/* 背景 */
+
+const view=
+ document.getElementById(
+  'battleView'
+ );
+
+if(currentBattleBackground){
+
+ view.style.backgroundImage=
+  `linear-gradient(
+     rgba(10,15,22,.08),
+     rgba(10,15,22,.15)
+   ),
+   url("${currentBattleBackground}")`;
+
+}else{
+
+ view.style.backgroundImage='';
+}
+
+/* =========================
+   敵HUD
+========================= */
+
+ const enemyHud=
+  document.getElementById(
+   'enemyHudRow'
+  );
+
+ enemyHud.innerHTML='';
+
+ for(const f of enemies){
+
+  const hud=
+   document.createElement(
+    'div'
+   );
+
+  hud.className=
+   'enemy-hud';
+
+  hud.innerHTML=
+   `
+    ${iconHtml(f)}
+
+    <div>
+
+     <div class="hud-name">
+      ${f.name}
+     </div>
+
+  ${ miniStat(
+ 'HP',
+ f.displayHp ?? f.hp,
+ f.displayMaxHp ?? f.maxHp,
+ 'hp'
+)}
+
+${miniStat(
+ '精神',
+ f.displayMental ?? f.mental,
+ f.displayMaxMental ?? f.maxMental,
+ 'mental'
+)}
+
+     ${miniStat(
+      'MP',
+      f.mp,
+      f.maxMp,
+      'mp'
+     )}
+
+    </div>
+   `;
+
+  enemyHud.appendChild(
+   hud
+  );
+ }
+
+
+ /* =========================
+    自分立ち絵
+ ========================= */
+
+ const playerSprite=
+  document.getElementById(
+   'playerSpriteArea'
+  );
+
+ if(my){
+
+  playerSprite.innerHTML=
+   `
+    <div
+     id="fighter-${my.side}"
+     class="
+      fighter-visual
+      player-visual
+     "
+    >
+     ${spriteHtml(
+      my,
+      'player'
+     )}
+    </div>
+   `;
+
+ }else{
+
+  playerSprite.innerHTML='';
+ }
+
+
+ /* =========================
+    敵立ち絵
+ ========================= */
+
+ const enemySprites=
+  document.getElementById(
+   'enemySpriteArea'
+  );
+
+ enemySprites.innerHTML='';
+
+ for(const f of enemies){
+
+  const visual=
+   document.createElement(
+    'div'
+   );
+
+  visual.id=
+   `fighter-${f.side}`;
+
+  visual.className=
+   'fighter-visual enemy-visual';
+
+  visual.innerHTML=
+   spriteHtml(
+    f,
+    'enemy'
+   );
+
+  enemySprites.appendChild(
+   visual
+  );
+ }
+
+
+ /* =========================
+    自分HUD
+ ========================= */
+
+ const playerHud=
+  document.getElementById(
+   'playerHud'
+  );
+
+ if(my){
+
+  playerHud.innerHTML=
+   `
+    ${iconHtml(my)}
+
+    <div>
+
+     <div class="hud-name">
+      ${my.name}
+     </div>
+
+    ${miniStat(
+ 'HP',
+ my.displayHp ?? my.hp,
+ my.displayMaxHp ?? my.maxHp,
+ 'hp'
+)}
+
+${miniStat(
+ '精神',
+ my.displayMental ?? my.mental,
+ my.displayMaxMental ?? my.maxMental,
+ 'mental'
+)}
+
+     ${miniStat(
+      'MP',
+      my.mp,
+      my.maxMp,
+      'mp'
+     )}
+
+     <div class="small">
+      ${statusText(my)}
+     </div>
+
+    </div>
+   `;
+ }
+
+
+ renderMoves();
+
+ renderSwitch();
+
+ syncBattleMessages();
+}
+
+function bar(n,v,m,cl){
+
+ return `<div>${n} ${Math.max(0,Math.round(v))}/${Math.round(m)}</div>
+ <div class="bar">
+  <div class="fill ${cl}" style="width:${Math.max(0,Math.min(100,v/m*100))}%"></div>
+ </div>`;
+}
+
+function statusText(f){
+
+ const a=[];
+
+ if(f.dodging){a.push('よける');}if(f.veilBoost){a.push(`かみをまく×${f.veilBoost}`);}if(f.halalMentalMul>1){a.push('ハラールフード');}
+ if(f.guard)a.push('防御');
+ if(f.gundam)a.push('ガンダム');
+ if(f.haruka)a.push('はるか');
+ if(f.rampage)a.push(`あばれうま${f.rampage}T`);
+if(f.parasiteStacks){
+ a.push(
+  `きせい×${f.parasiteStacks}`
+ );
+}
+ if(f.mentalResistStacks)a.push(`ねんてん×${f.mentalResistStacks}`);
+ if(f.swimming)a.push('潜航');
+
+ return a.join(' / ')||'なし';
+}
+
+function renderMoves(){
+
+ const f=
+  activeF(mySide());
+
+ const box=
+  document.getElementById('moves');
+
+ box.innerHTML='';
+
+ if(!f||!f.alive){
+  return;
+ }
+  if(
+ battleMessageBusy()
+){
+ box.innerHTML=
+  '<button class="btn" disabled>メッセージ表示中…</button>';
+
+ return;
+}
+
+
+ if(
+  appState.connection==='friend' &&
+  onlineWaitingAction
+ ){
+  box.innerHTML=
+   '<button class="btn" disabled>ほかの参加者の行動を待っています…</button>';
+
+  return;
+ }
+
+ if(f.swimming){
+  box.innerHTML=
+   '<button class="btn" disabled>潜航中</button>';
+
+  return;
+ }
+
+ const groups={
+  unique:[],
+  usable:[],
+  common:[]
+ };
+
+ for(
+  const [name,move]
+  of Object.entries(f.moves)
+ ){
+
+  if(
+   Object.prototype.hasOwnProperty.call(
+    commonMoves,
+    name
+   )
+  ){
+   groups.common.push(
+    [name,move]
+   );
+
+  }else if(
+   Object.prototype.hasOwnProperty.call(
+    moveBook,
+    name
+   )
+  ){
+   groups.usable.push(
+    [name,move]
+   );
+
+  }else{
+   groups.unique.push(
+    [name,move]
+   );
   }
+ }
+
+ renderMoveGroup(
+  box,
+  f,
+  '専用技',
+  'unique',
+  groups.unique
+ );
+
+ renderMoveGroup(
+  box,
+  f,
+  '使える技',
+  'usable',
+  groups.usable
+ );
+
+ renderMoveGroup(
+  box,
+  f,
+  '共通コマンド',
+  'common',
+  groups.common
+ );
 }
 
-function selectTarget(move, target) {
-  const p = gameState.players[gameState.activePlayerIndex];
-  gameState.pendingActions[p.id] = { actor: p, move: move, target: target };
-  promptPlayerAction(gameState.activePlayerIndex + 1);
+function renderMoveGroup(
+ box,
+ f,
+ title,
+ type,
+ moves
+){
+
+ if(!moves.length){
+  return;
+ }
+
+ const section=
+  document.createElement('div');
+
+ section.className=
+  'move-section';
+
+ const heading=
+  document.createElement('div');
+
+ heading.className=
+  `move-section-title ${type}`;
+
+ heading.textContent=
+  title;
+
+ section.appendChild(
+  heading
+ );
+
+ const grid=
+  document.createElement('div');
+
+ grid.className=
+  'move-section-grid';
+
+ for(
+  const [n,m]
+  of moves
+ ){
+
+  const b=
+   document.createElement('button');
+
+  b.className=
+   `btn move ${type}`;
+
+  const cost=
+   effectiveCost(
+    f,
+    m.mp||0
+   );
+
+  b.textContent=
+   `${n}${cost?`\nMP ${cost}`:''}`;
+
+  b.disabled=
+   f.mp<cost;
+
+  b.onclick=
+   ()=>playerAct(n);
+
+  attachTip(
+   b,
+   moveDetail(
+    n,
+    m,
+    f
+   )
+  );
+
+  grid.appendChild(
+   b
+  );
+ }
+
+ section.appendChild(
+  grid
+ );
+
+ box.appendChild(
+  section
+ );
+}
+function moveDetail(n,m){
+ return `${n}
+${JSON.stringify(m,null,2).replace(/[{}"]/g,'')}`;
 }
 
-// --- ターン解決 ---
-function resolveTurn() {
-  let actions = Object.values(gameState.pendingActions);
+function renderSwitch(){
 
-  actions.sort((a, b) => {
-    if (a.move.type === 'def' && b.move.type !== 'def') return -1;
-    if (b.move.type === 'def' && a.move.type !== 'def') return 1;
+ const b=
+  appState.battle;
 
-    if (a.move.priority && !b.move.priority) return -1;
-    if (b.move.priority && !a.move.priority) return 1;
+ const r=
+  document.getElementById('switchRow');
 
-    let aPrio = getPriorityScore(a.actor.active, b.actor.active);
-    let bPrio = getPriorityScore(b.actor.active, a.actor.active);
-    if (aPrio !== bPrio) return bPrio - aPrio;
+ r.innerHTML='';
 
-    return Math.random() - 0.5;
+ if(b.mode!=='team3'){
+  return;
+ }
+
+ const s=mySide();
+
+ b.teams[s].forEach((f,i)=>{
+
+  if(
+   i===b.active[s] ||
+   !f.alive
+  ){
+   return;
+  }
+
+  const btn=
+   document.createElement('button');
+
+  btn.className='btn';
+  btn.textContent=
+   `交代: ${f.name}`;
+
+  btn.onclick=
+   ()=>playerSwitch(i);
+
+  r.appendChild(btn);
+ });
+}
+
+function playerSwitch(i){
+
+ if(appState.connection==='friend'){
+  submitOnlineAction({
+   type:'switch',
+   to:i
   });
-
-  actions.forEach(act => {
-    if (act.actor.active.isDead) return;
-    executeMove(act.actor, act.move, act.target);
+ }else{
+  runTurn({
+   type:'switch',
+   to:i
   });
-
-  gameState.players.forEach(p => {
-    const f = p.active;
-    if (f.isDead) return;
-    if (f.states.gundam) {
-      log(`ガンダムの全体攻撃！`);
-      gameState.players.forEach(op => {
-        if (op !== p && !op.active.isDead) {
-          applyDamage(op.active, 10, 0, []);
-        }
-      });
-    }
-  });
-
-  let battleEnded = checkBattleEnd();
-  if (!battleEnded) {
-    gameState.turn++;
-    startTurn();
-  }
+ }
 }
 
-function getPriorityScore(f, targetF) {
-  let score = 0;
-  if (f.traits.includes('だんそんじょひ') && targetF.species.includes(SPECIES.ONNA)) score += 10;
-  if (f.traits.includes('ごうまん')) score += 5;
-  if (f.states.karamitsuku) score -= 3;
-  return score;
+function playerAct(name){
+
+ if(name==='スキップ'){
+
+  if(appState.connection==='friend'){
+   submitOnlineAction({
+    type:'none'
+   });
+  }else{
+   runTurn({
+    type:'none'
+   });
+  }
+
+  return;
+ }
+
+ const f=
+  activeF(mySide());
+
+ if(!f){
+  return;
+ }
+
+ const m=
+  f.moves[name];
+
+ if(!m){
+  return;
+ }
+
+ // 乱闘で、敵を対象にする単体技なら
+ // 対象選択画面を出す
+ if(
+  appState.mode==='ffa4' &&
+  moveNeedsTarget(m)
+ ){
+
+  showTargetSelect(
+   f,
+   name
+  );
+
+  return;
+ }
+
+ sendPlayerMove(
+  name,
+  null
+ );
 }
 
-// --- 技の実行と計算 ---
-function executeMove(actorP, move, targetP) {
-  const f = actorP.active;
-  const target = targetP ? targetP.active : null;
+function moveNeedsTarget(m){
 
-  let mpCost = move.mp || 0;
-  if (f.traits.includes('どくぜつ') && mpCost > 0) mpCost = Math.max(0, mpCost - 1);
-  if (f.mp < mpCost) {
-    log(`${f.name}はMPが足りなくて ${move.name} が使えなかった！`);
-    return;
-  }
-  f.mp -= mpCost;
-
-  log(`${f.name}の ${move.name}！`);
-
-  if (f.traits.includes('できん')) {
-    if (Math.random() < 0.3) {
-      log(`${f.name}は出禁のため行動できなかった！`);
-      f.buffs.menMul *= 1.1;
-      return;
-    }
-  }
-
-  if (move.unique === 'engeki') {
-    let lastEnemyAction = gameState.pendingActions[targetP.id];
-    if (lastEnemyAction && lastEnemyAction.move) {
-      log(`${f.name}は演劇で ${lastEnemyAction.move.name} をコピーした！`);
-      executeMove(actorP, lastEnemyAction.move, targetP);
-    }
-    return;
-  }
-
-  if (move.type === 'def') {
-    log(`${f.name}は身構えている！(被ダメージ -10)`);
-    f.isDefending = true;
-    return;
-  }
-
-  if (move.heal) {
-    f.hp = Math.min(f.maxHp, f.hp + move.heal);
-    f.men = Math.min(f.maxMen, f.men + move.heal);
-  }
-  if (move.healHp) f.hp = Math.min(f.maxHp, f.hp + move.healHp);
-  if (move.healMen) f.men = Math.min(f.maxMen, f.men + move.healMen);
-  if (move.mpRec) f.mp = Math.min(f.maxMp, f.mp + move.mpRec);
-  if (move.selfDmg) f.hp -= move.selfDmg;
-  if (move.selfMenDmg) f.men -= move.selfMenDmg;
-
-  if (move.type === 'buff' || move.buffNextPhys || move.buffNextMen || move.buffNextAll) {
-    if (move.buffNextPhys) f.buffs.nextPhysMul *= move.buffNextPhys;
-    if (move.name === 'わるだくみ') f.buffs.nextMenMul *= 1.2;
-    if (move.buffNextAll) { f.buffs.nextPhysMul *= move.buffNextAll; f.buffs.nextMenMul *= move.buffNextAll; }
-  }
-
-  if (move.unique === 'gundam') f.states.gundam = true;
-  if (move.unique === 'abareuma') f.states.abareuma = 3;
-  if (move.dotMen) target.states.batouCount = Math.min(6, target.states.batouCount + 1);
-  if (move.debuffPriority) target.states.karamitsuku = true;
-
-  let baseP = move.pDmg || 0;
-  let baseM = move.mDmg || 0;
-
-  if (move.multi) {
-    let currentMultiplier = 1.0;
-    for (let i = 0; i < move.multi; i++) {
-      let pD = Math.round(move.baseDmg * currentMultiplier);
-      applyDamage(target, pD, 0, move.attr || []);
-      if (move.multiScale) currentMultiplier *= move.multiScale;
-    }
-    return;
-  }
-
-  if (baseP > 0 || baseM > 0 || move.gambleDmg || move.attr) {
-    if (move.gambleDmg) {
-      let success = Math.random() < 0.5;
-      if (f.traits.includes('ギャンブラー')) success = Math.random() < 0.7;
-      if (success) {
-        let mult = f.traits.includes('ギャンブラー') ? 1.5 : 1.0;
-        baseP = Math.round(move.gambleDmg * mult);
-      } else {
-        log(`ギャンブル失敗！`);
-        if (f.traits.includes('ギャンブラー')) f.mp = Math.max(0, f.mp - 5);
-        return;
-      }
-    }
-
-    let pMul = f.buffs.physMul * f.buffs.nextPhysMul;
-    let mMul = f.buffs.menMul * f.buffs.nextMenMul;
-
-    if (f.traits.includes('うんどうおんち')) pMul *= 0.7;
-    if (f.traits.includes('ふきんしん')) mMul *= 1.3;
-    if (f.traits.includes('おおごえ') && (move.attr && move.attr.includes('おと'))) { pMul *= 1.5; mMul *= 1.5; }
-    if (f.traits.includes('ぼうず')) mMul *= 0.75;
-    if (f.traits.includes('れいしょうけい')) mMul *= 1.1;
-    if (f.traits.includes('どくぜつ')) {
-      if (target && target.species.some(s => [SPECIES.FRAN, SPECIES.ROUNIN, SPECIES.TANKI].includes(s))) {
-        mMul *= 1.5;
-      } else {
-        mMul *= 1.1;
-      }
-    }
-    if (f.traits.includes('きけんしそう')) {
-      let m = 1.1;
-      if (target && target.species.includes(SPECIES.MOJAMOJA)) m = 1.2;
-      if (target && target.species.includes(SPECIES.DEBU)) m = 1.4;
-      pMul *= m;
-    }
-    if (f.traits.includes('じゅんあい') && target && target.traits.includes('うわきしょう')) {
-      pMul *= 1.2; mMul *= 1.2;
-    }
-
-    let finalP = Math.round(baseP * pMul);
-    let finalM = Math.round(baseM * mMul);
-
-    if (target) {
-      if (target.traits.includes('おやのななひかり') && Math.random() < 0.3 && finalP > 0) {
-        log(`${target.name}は親の七光りで回避した！`);
-        return;
-      }
-      if (target.traits.includes('えんきんほう') && Math.random() < 0.25 && finalP > 0) {
-        log(`${target.name}は遠近法で物理攻撃を回避した！`);
-        return;
-      }
-    }
-
-    if (move.mDmgAll || move.pDmgAll) {
-      gameState.players.forEach(op => {
-        if (op !== actorP && !op.active.isDead) {
-          applyDamage(op.active, move.pDmgAll || 0, move.mDmgAll || 0, move.attr || []);
-        }
-      });
-    } else if (target) {
-      applyDamage(target, finalP, finalM, move.attr || []);
-    }
-  }
-
-  f.buffs.nextPhysMul = 1.0;
-  f.buffs.nextMenMul = 1.0;
-}
-
-function applyDamage(target, pDmg, mDmg, attrs) {
-  if (attrs.includes('いろ')) {
-    if (target.traits.includes('しきもう')) { pDmg = 0; mDmg = 0; log(`${target.name}は色覚障害のため色攻撃が効かない！`); }
-    if (target.traits.includes('ボケ')) { pDmg *= 0.75; mDmg *= 0.75; }
-    if (target.traits.includes('しらが')) pDmg *= 0.8;
-    if (target.traits.includes('くろいろ')) {
-      pDmg *= 1.5;
-      log(`${target.name}は色攻撃に反撃した！`);
-    }
-  }
-
-  if (target.traits.includes('無神経')) pDmg *= 0.8;
-  if (target.traits.includes('わがまま')) {
-    mDmg *= 0.5;
-    if (Math.random() < 0.2) pDmg += 20;
-  }
-  if (target.traits.includes('めめしい')) mDmg *= 1.2;
-
-  if (target.isDefending) {
-    pDmg = Math.max(0, pDmg - 10);
-    mDmg = Math.max(0, mDmg - 10);
-  }
-
-  pDmg = Math.round(pDmg);
-  mDmg = Math.round(mDmg);
-
-  target.hp -= pDmg;
-  target.men -= mDmg;
-
-  if (pDmg > 0 || mDmg > 0) {
-    log(`${target.name}に 物理:${pDmg} / 精神:${mDmg} のダメージ！`);
-  }
-
-  checkDeath(target);
-}
-
-function checkDeath(f) {
-  if (f.hp <= 0 || f.men <= 0) {
-    if (!f.isDead) {
-      f.isDead = true;
-      log(`<b>${f.name} は倒れた！</b>`);
-      f.states.gundam = false;
-    }
-  }
-}
-
-function checkBattleEnd() {
-  let alivePlayers = gameState.players.filter(p => !p.active.isDead || p.bench.some(b => !b.isDead));
-  if (alivePlayers.length <= 1) {
-    let winner = alivePlayers[0] ? alivePlayers[0].active.name : 'なし';
-    log(`<h3>ゲーム終了！ 勝者: ${winner}</h3>`);
-    
-    // コマンドエリアを非表示にし、終了時ナビボタンを表示
-    document.querySelector('.cmd-area').style.display = 'none';
-    document.getElementById('end-game-nav').style.display = 'flex';
-    return true;
-  }
+ // 全体攻撃は選択不要
+ if(m.allTargets){
   return false;
+ }
+
+ // 自分だけに作用する技
+ if(
+  m.priorityGuard ||
+  m.special==='dodge' ||
+  m.special==='skip' ||
+  m.special==='gundam' ||
+  m.special==='haruka' ||
+  m.special==='rampage' ||
+  m.special==='mentalResistStack' ||
+  m.special==='invest' ||
+  m.special==='swim' ||
+  m.special==='dogGuard' ||
+  m.special==='wrapHair' ||
+   
+  m.special==='halalFood'
+ ){
+  return false;
+ }
+
+ // 通常攻撃・精神攻撃・相手対象特殊技
+ // えんげきもここに含まれる
+ return (
+   m.special==='ethnicJoke' ||
+m.special==='parthianShot' ||
+  m.physical ||
+  m.mental ||
+  m.special==='creation' ||
+  m.multi ||
+   m.special==='middleFinger' ||
+m.special==='rin' ||
+  m.special==='copy' ||
+  m.special==='parasite' ||
+  m.special==='strangle' ||
+  m.special==='handPiece' ||
+    m.special==='strikeOut' ||
+  m.special==='giveDekin' ||
+  m.special==='pitchAttack' ||
+  m.special==='removeMask' ||
+  m.special==='verbalDot' ||
+  m.special==='entangle' ||
+  m.special==='stealMp' ||
+  m.special==='gamble' ||
+  m.special==='affair' ||
+  m.special==='seiri' ||
+  m.special==='lost' ||
+  m.special==='poop' ||
+  m.special==='elderDouble' ||
+  m.special==='wakeMp' ||
+  m.special==='randomMove'
+ );
 }
 
-// --- UIレンダリング ---
-function renderBattleScreen() {
-  const container = document.getElementById('battle-field');
-  container.className = 'battle-field' + (gameState.mode === '4p' ? ' b-4p' : '');
-  container.innerHTML = '';
+function showTargetSelect(f,name){
 
-  gameState.players.forEach((p, idx) => {
-    const f = p.active;
-    const box = document.createElement('div');
-    box.className = `fighter-box ${f.isDead ? 'dead' : ''} ${idx === gameState.activePlayerIndex ? 'active-turn' : ''}`;
-    
-    box.innerHTML = `
-      <div style="font-weight:bold; font-size:12px;">[${p.pName}] ${f.name}</div>
-      <div class="stat-bar"><div class="stat-fill hp-fill" style="width:${Math.max(0, (f.hp/f.maxHp)*100)}%"></div><span class="bar-text">HP: ${f.hp}/${f.maxHp}</span></div>
-      <div class="stat-bar"><div class="stat-fill mental-fill" style="width:${Math.max(0, (f.men/f.maxMen)*100)}%"></div><span class="bar-text">精神: ${f.men}/${f.maxMen}</span></div>
-      <div class="stat-bar"><div class="stat-fill mp-fill" style="width:${Math.max(0, (f.mp/f.maxMp)*100)}%"></div><span class="bar-text">MP: ${f.mp}/${f.maxMp}</span></div>
-    `;
-    box.onmouseenter = (e) => showTooltip(e, getCharInfoHtml(f));
-    box.onmouseleave = hideTooltip;
-    container.appendChild(box);
-  });
+ const box=
+  document.getElementById('moves');
+
+ const enemies=
+  livingEnemies(f);
+
+ box.innerHTML='';
+
+ if(!enemies.length){
+  box.innerHTML=
+   '<button class="btn" disabled>攻撃できる相手がいません</button>';
+
+  return;
+ }
+
+ const title=
+  document.createElement('div');
+
+ title.className='small';
+ title.textContent=
+  `「${name}」の対象を選択`;
+
+ box.appendChild(title);
+
+ for(const t of enemies){
+
+  const btn=
+   document.createElement('button');
+
+  btn.className=
+   'btn move';
+
+  btn.textContent=
+   `${t.name}\nHP ${Math.max(0,Math.round(t.hp))} / 精神 ${Math.max(0,Math.round(t.mental))}`;
+
+  btn.onclick=
+   ()=>sendPlayerMove(
+    name,
+    t.side
+   );
+
+  box.appendChild(btn);
+ }
+
+ const back=
+  document.createElement('button');
+
+ back.className='btn';
+ back.textContent='技選択に戻る';
+ back.onclick=renderMoves;
+
+ box.appendChild(back);
 }
 
-function renderCommandUI(p) {
-  const actionsDiv = document.getElementById('cmd-actions');
-  const targetsDiv = document.getElementById('cmd-targets');
-  const benchDiv = document.getElementById('cmd-bench');
-  
-  actionsDiv.style.display = 'grid';
-  targetsDiv.style.display = 'none';
-  benchDiv.style.display = 'none';
-  
-  actionsDiv.innerHTML = '';
-  document.getElementById('cmd-header').innerText = `${p.active.name} の行動を選択`;
+function sendPlayerMove(
+ name,
+ targetSide=null
+){
 
-  p.active.moves.forEach(m => {
-    const btn = document.createElement('button');
-    btn.innerText = `${m.name} (${m.mp || 0})`;
-    btn.disabled = (m.mp || 0) > p.active.mp;
-    btn.onclick = () => selectPlayerMove(m);
-    btn.onmouseenter = (e) => showTooltip(e, `<b>${m.name}</b><br>${m.desc || '技の詳細'}`);
-    btn.onmouseleave = hideTooltip;
-    actionsDiv.appendChild(btn);
-  });
+ const action={
+  type:'move',
+  name
+ };
 
-  if (gameState.mode === '3v3' && p.bench.some(b => !b.isDead)) {
-    const switchBtn = document.createElement('button');
-    switchBtn.style.background = '#e17055';
-    switchBtn.innerText = '交代する';
-    switchBtn.onclick = () => renderBenchUI(p);
-    actionsDiv.appendChild(switchBtn);
+ if(targetSide!==null){
+  action.targetSide=
+   targetSide;
+ }
+
+ if(
+  appState.connection==='friend'
+ ){
+  submitOnlineAction(
+   action
+  );
+ }else{
+  runTurn(
+   action
+  );
+ }
+}
+
+function chooseCpu(f){
+
+ if(f.swimming){
+  return {type:'none'};
+ }
+
+ if(f.rampage>0){
+
+  const ks=
+   Object.keys(f.moves);
+
+  const name=
+   ks[
+    Math.floor(
+     Math.random()*ks.length
+    )
+   ];
+
+  const action={
+   type:'move',
+   name
+  };
+
+  const move=
+   f.moves[name];
+
+  if(
+   appState.mode==='ffa4' &&
+   moveNeedsTarget(move)
+  ){
+
+   const target=
+    randomLivingEnemy(f);
+
+   if(target){
+    action.targetSide=
+     target.side;
+   }
   }
+
+  return action;
+ }
+
+ let ks=
+  Object.entries(f.moves)
+   .filter(
+    ([,m])=>
+     f.mp>=
+     effectiveCost(
+      f,
+      m.mp||0
+     )
+   );
+
+ if(!ks.length){
+
+  const action={
+   type:'move',
+   name:'なぐる'
+  };
+
+  if(appState.mode==='ffa4'){
+
+   const target=
+    randomLivingEnemy(f);
+
+   if(target){
+    action.targetSide=
+     target.side;
+   }
+  }
+
+  return action;
+ }
+
+ ks=
+  ks.filter(
+   ([n])=>
+    n!=='防御'||
+    Math.random()<.35
+  );
+
+ const chosen=
+  ks[
+   Math.floor(
+    Math.random()*ks.length
+   )
+  ];
+
+ const name=
+  chosen[0];
+
+ const move=
+  chosen[1];
+
+ const action={
+  type:'move',
+  name
+ };
+
+ if(
+  appState.mode==='ffa4' &&
+  moveNeedsTarget(move)
+ ){
+
+  const target=
+   randomLivingEnemy(f);
+
+  if(target){
+   action.targetSide=
+    target.side;
+  }
+ }
+
+ return action;
+}
+function getHolgonuPool(){
+
+ const map=
+  new Map();
+
+ function addMoves(moves){
+
+  for(
+   const [name,move]
+   of Object.entries(moves)
+  ){
+
+   if(
+    name==='えんげき' ||
+    name==='ホロゴヌ・サニア・コイケ'
+   ){
+    continue;
+   }
+
+   if(!map.has(name)){
+    map.set(
+     name,
+     move
+    );
+   }
+  }
+ }
+
+ // 共通行動
+ addMoves(commonMoves);
+
+ // 全キャラの
+ // 専用技＋使える技
+ for(const c of chars){
+  addMoves(c.moves);
+ }
+
+ return [
+  ...map.entries()
+ ].map(
+  ([name,move])=>({
+   name,
+   move
+  })
+ );
 }
 
-function renderTargetUI(move, enemies) {
-  const actionsDiv = document.getElementById('cmd-actions');
-  const targetsDiv = document.getElementById('cmd-targets');
-  actionsDiv.style.display = 'none';
-  targetsDiv.style.display = 'grid';
-  targetsDiv.innerHTML = '';
+function useHolgonu(f,targets){
 
-  document.getElementById('cmd-header').innerText = `ターゲットを選択`;
+ const pool=
+  getHolgonuPool();
 
-  enemies.forEach(ep => {
-    const btn = document.createElement('button');
-    btn.innerText = ep.active.name;
-    btn.onclick = () => selectTarget(move, ep);
-    targetsDiv.appendChild(btn);
+ if(!pool.length){
+  log('ホロゴヌで使える技がなかった');
+  return;
+ }
+
+ const chosen=
+  pool[
+   Math.floor(
+    Math.random()*pool.length
+   )
+  ];
+
+ log(
+  `${f.name}のホロゴヌ！ `+
+  `「${chosen.name}」が選ばれた`
+ );
+ prepareDefenseMove(
+  f,
+  chosen.move
+ );
+
+ executeMoveEffect(
+  f,
+  chosen.name,
+  chosen.move,
+  targets
+ );
+}
+function prepareDefenseMove(f,m){
+
+ if(!f||!m){
+  return;
+ }
+  if(
+ m.special==='parthianShot'
+){
+ f.parthianDodging=true;
+}
+
+ if(m.priorityGuard){
+  f.guard=
+   m.guard||10;
+ }
+
+if(
+  m.special==='dogGuard'
+ ){
+  f.guard=9999;
+ }
+
+if(
+  m.special==='lost'
+ ){
+  f.dodging=true;
+ }
+
+ if(m.special==='dodge'){
+  f.dodging=true;
+ }
+}
+
+function prepareTurnActions(acts){
+
+ for(const x of acts){
+
+  x.f.plannedAction=
+   x.a
+    ?{...x.a}
+    :{type:'none'};
+
+  if(x.a?.type==='move'){
+
+   const m=
+    x.f.moves[x.a.name];
+
+   prepareDefenseMove(
+    x.f,
+    m
+   );
+  }
+ }
+}
+
+function runTurn(player){
+
+ const b=
+  appState.battle;
+
+ if(b.finished){
+  return;
+ }
+
+ let acts=[];
+
+ if(b.mode==='ffa4'){
+
+  acts.push({
+   f:activeF(0),
+   a:player
   });
+
+  for(let s=1;s<4;s++){
+
+   acts.push({
+    f:activeF(s),
+    a:chooseCpu(activeF(s))
+   });
+  }
+
+ }else{
+
+  acts=[
+   {
+    f:activeF(0),
+    a:player
+   },
+   {
+    f:activeF(1),
+    a:chooseCpu(activeF(1))
+   }
+  ];
+ }
+
+prepareTurnActions(acts);
+acts=sortTurnActions(acts);
+
+ for(const x of acts){
+
+  if(!x.f.alive){
+   continue;
+  }
+
+ executeAction(
+ x.f,
+ x.a,
+ livingEnemies(x.f)
+);
+
+  checkDeaths();
+
+  if(b.finished){
+   break;
+  }
+ }
+
+ endTurn();
 }
 
-function renderBenchUI(p) {
-  const actionsDiv = document.getElementById('cmd-actions');
-  const benchDiv = document.getElementById('cmd-bench');
-  actionsDiv.style.display = 'none';
-  benchDiv.style.display = 'grid';
-  benchDiv.innerHTML = '';
+function priorityScore(x){
 
-  document.getElementById('cmd-header').innerText = `交代するキャラを選択 (1ターン消費)`;
+ if(x.a.type==='switch'){
+  return 50;
+ }
 
-  p.bench.forEach((b, idx) => {
-    if (!b.isDead) {
-      const btn = document.createElement('button');
-      btn.innerText = `${b.name} (HP:${b.hp})`;
-      btn.onclick = () => {
-        const temp = p.active;
-        p.active = b;
-        p.bench[idx] = temp;
-        log(`${p.pName}は ${b.name} に交代した！`);
-        promptPlayerAction(gameState.activePlayerIndex + 1);
-      };
-      benchDiv.appendChild(btn);
+ if(x.a.type!=='move'){
+  return 0;
+ }
+
+ const m=
+  x.f.moves[x.a.name]||{};
+
+ if(m.copyPriority){
+  return -100;
+ }
+
+ if(
+  m.priorityGuard ||
+  m.special==='dogGuard' ||
+  m.special==='lost'
+ ){
+  return -10;
+ }
+
+ if(m.priority){
+  return 20;
+ }
+
+ if(
+  x.f.traits.includes('だんそんじょひ') &&
+  allActive().some(
+   t=>
+    t!==x.f &&
+    t.races.includes('おんな')
+  )
+ ){
+  return 15;
+ }
+
+
+
+  if(
+  x.f.traits.includes('ごうまん')
+ ){
+  return 3;
+ }
+
+ if(
+ x.f.traits.includes('ピッチャー') &&
+ Math.random()<P.normal
+){
+ return 10;
+}
+
+if(
+ x.f.traits.includes('ゆうぼくみん') &&
+ Math.random()<P.normal
+){
+ return 10;
+}
+
+return 0;
+}
+
+function shuffleTurnGroup(group){
+
+ const a=[...group];
+
+ for(let i=a.length-1;i>0;i--){
+
+  const j=
+   Math.floor(
+    Math.random()*(i+1)
+   );
+
+  [a[i],a[j]]=
+   [a[j],a[i]];
+ }
+
+ return a;
+}
+
+
+function sortTurnActions(acts){
+
+ // priorityScoreごとに分類
+ const groups=new Map();
+
+ for(const x of acts){
+
+  const p=
+   priorityScore(x);
+
+  if(!groups.has(p)){
+   groups.set(p,[]);
+  }
+
+  groups.get(p).push(x);
+ }
+
+ // 優先度が高い順
+ const priorities=
+  [...groups.keys()]
+   .sort((a,b)=>b-a);
+
+ const result=[];
+
+ for(const p of priorities){
+
+  let group=
+   groups.get(p);
+
+  // 1人ならそのまま
+  if(group.length<=1){
+
+   result.push(...group);
+
+   continue;
+  }
+
+  // まず通常キャラをランダムに並べる
+  const normal=
+   shuffleTurnGroup(
+    group.filter(
+     x=>
+      (x.f.entangled||0)<=0
+    )
+   );
+
+  // からみつかれているキャラ
+  const entangled=
+   shuffleTurnGroup(
+    group.filter(
+     x=>
+      (x.f.entangled||0)>0
+    )
+   );
+
+  /*
+   からみつきがいない場合は
+   普通のランダム順
+  */
+  if(!entangled.length){
+
+   result.push(
+    ...shuffleTurnGroup(group)
+   );
+
+   continue;
+  }
+
+  /*
+   2人だけの場合
+
+   からみつかれた側：
+   20%で先行
+   80%で後攻
+  */
+  if(
+   group.length===2 &&
+   entangled.length===1
+  ){
+
+   const e=
+    entangled[0];
+
+   const n=
+    normal[0];
+
+   if(Math.random()<0.2){
+
+    result.push(
+     e,
+     n
+    );
+
+   }else{
+
+    result.push(
+     n,
+     e
+    );
+   }
+
+   continue;
+  }
+
+  /*
+   乱闘など3人以上。
+
+   からみつかれたキャラを
+   1人ずつ配置する。
+  */
+  let ordered=[
+   ...normal
+  ];
+
+  for(const e of entangled){
+
+   if(ordered.length===0){
+
+    ordered.push(e);
+
+    continue;
+   }
+
+   if(Math.random()<0.8){
+
+    // 80%で最後
+    ordered.push(e);
+
+   }else{
+
+    /*
+     残り20%では
+     「最後以外」の位置を均等抽選
+    */
+
+    const position=
+     Math.floor(
+      Math.random()*
+      ordered.length
+     );
+
+    ordered.splice(
+     position,
+     0,
+     e
+    );
+   }
+  }
+
+  result.push(
+   ...ordered
+  );
+ }
+
+ return result;
+}
+  
+function executeAction(f,a,targets){
+
+ if(a.type==='none'){
+  return;
+ }
+
+ if(a.type==='switch'){
+
+  log(`${f.name}は交代した`);
+
+  appState.battle.active[f.side]=a.to;
+
+  return;
+ }
+
+ const n=a.name;
+ const m=f.moves[n];
+
+ if(!m){
+  return;
+ }
+
+// 選択された対象がある場合は
+// 生存確認してその相手を先頭にする
+if(
+ a.targetSide!==undefined &&
+ a.targetSide!==null
+){
+
+ const selected=
+  livingEnemies(f)
+   .find(
+    t=>t.side===a.targetSide
+   );
+
+ if(selected){
+
+  targets=[
+   selected,
+   ...targets.filter(
+    t=>t!==selected
+   )
+  ];
+
+ }else if(
+  moveNeedsTarget(m)
+ ){
+
+  log(
+   `${f.name}の攻撃対象はすでに脱落している`
+  );
+
+  return;
+ }
+}
+
+ const cost=
+  effectiveCost(
+   f,
+   m.mp||0
+  );
+
+ if(f.mp<cost){
+
+  log(
+   `${f.name}はMP不足で${n}を使えない`
+  );
+
+  return;
+ }
+
+ if(
+  f.traits.includes('できん') &&
+  Math.random()<0.2
+ ){
+  log(
+   `${f.name}はできんで行動できなかった`
+  );
+
+  return;
+ }
+
+ f.mp-=cost;
+
+ log(
+  `${f.name}の「${n}」`
+ );
+
+ 
+  
+
+ // あばれうま中：1/2で自分を攻撃
+ // 基礎威力の半分。あばれうま2倍は乗せない
+ if(
+  f.rampage>0 &&
+  Math.random()<1/2 &&
+  (m.physical || m.multi)
+ ){
+
+  log(
+   `${f.name}は暴走して自分を攻撃した！`
+  );
+
+  if(m.multi){
+
+   for(const hit of m.multi){
+
+    directDamage(
+     f,
+     Math.round(hit*1.2),
+     0,
+     'あばれうま自傷'
+    );
+   }
+
+  }else{
+
+   directDamage(
+    f,
+    Math.round(
+     (m.physical||0)*1.5
+    ),
+    0,
+    'あばれうま自傷'
+   );
+  }
+
+  return;
+ }
+
+ // えんげき
+if(m.special==='copy'){
+
+ const enemy=
+  targets[0];
+
+ if(
+  !enemy ||
+  !enemy.alive
+ ){
+  log(
+   'えんげきする相手がいない'
+  );
+
+  return;
+ }
+
+ const enemyAct=
+  enemy.plannedAction;
+
+ if(
+  !enemyAct ||
+  enemyAct.type!=='move'
+ ){
+  log(
+   `${f.name}のえんげきは失敗した`
+  );
+
+  return;
+ }
+
+ const copiedName=
+  enemyAct.name;
+
+ if(copiedName==='えんげき'){
+
+  log(
+   `${f.name}はえんげきをコピーできなかった`
+  );
+
+  return;
+ }
+
+ const copiedMove=
+  enemy.moves[
+   copiedName
+  ];
+
+ if(!copiedMove){
+  return;
+ }
+
+ log(
+  `${f.name}は「${copiedName}」をえんげきした！`
+ );
+
+ // ホロゴヌをコピー
+ if(
+  copiedName===
+  'ホロゴヌ・サニア・コイケ'
+ ){
+
+  useHolgonu(
+   f,
+   [enemy]
+  );
+
+  return;
+ }
+
+ prepareDefenseMove(
+  f,
+  copiedMove
+ );
+
+ // コピーした技が全体技
+ if(copiedMove.allTargets){
+
+  executeMoveEffect(
+   f,
+   copiedName,
+   copiedMove,
+   livingEnemies(f)
+  );
+
+  return;
+ }
+
+ // 単体技なら
+ // えんげきで選んだ相手自身に使う
+ executeMoveEffect(
+  f,
+  copiedName,
+  copiedMove,
+  [enemy]
+ );
+
+ return;
+}
+
+
+
+ executeMoveEffect(
+  f,
+  n,
+  m,
+  targets
+ );
+}
+ 
+
+function executeMoveEffect(f,n,m,targets){
+  if(m.special==='slugExtract'){
+
+ const before=f.hp;
+
+ f.hp=
+  Math.min(
+   f.maxHp,
+   f.hp+40
+  );
+
+ const healed=
+  f.hp-before;
+
+ log(
+  `${f.name}はなめくじエキスでHPを${healed}回復した！`,
+  'heal',
+  f.side,
+  'heal',
+  statSnapshot(f)
+ );
+
+ return;
+}
+  /*
+ パルティアンショット
+
+ 攻撃・防御補正を一切受けない
+ 貫通物理20
+*/
+if(m.special==='parthianShot'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ directDamage(
+  t,
+  20,
+  0,
+  'パルティアンショット'
+ );
+
+ return;
+}
+  /*
+ エスニックジョーク
+
+ 相手MPを最大2吸収
+ 相手の精神を10回復
+*/
+if(m.special==='ethnicJoke'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ const take=
+  Math.min(
+   2,
+   t.mp
+  );
+
+ t.mp-=take;
+
+ f.mp=
+  Math.min(
+   f.maxMp,
+   f.mp+take
+  );
+
+ const before=
+  t.mental;
+
+ t.mental=
+  Math.min(
+   t.maxMental,
+   t.mental+10
+  );
+
+ const healed=
+  t.mental-before;
+
+ log(
+  `${f.name}は${t.name}からMPを${take}吸収した！`
+ );
+
+ if(healed>0){
+
+  log(
+   `${t.name}の精神が${healed}回復した！`,
+   'heal',
+   t.side,
+   'heal',
+   statSnapshot(t)
+  );
+ }
+
+ return;
+}
+
+  /*
+ なかゆび
+ 自分の精神-10
+ 相手に貫通物理30
+ 攻撃バフ・防御・各種ダメージ補正を無視
+*/
+if(m.special==='middleFinger'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ /*
+  相手：
+  あらゆる攻撃・防御補正を無視して
+  物理30固定ダメージ
+ */
+ directDamage(
+  t,
+  30,
+  0,
+  'なかゆび'
+ );
+
+ /*
+  自分：
+  精神10ダメージ
+ */
+ directDamage(
+  f,
+  0,
+  10,
+  'なかゆび自傷'
+ );
+
+ return;
+}
+  /*
+ てんちそうぞう
+ 物理50＋精神50
+ 消費MP10
+*/
+if(m.special==='creation'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ applyDamage(
+  f,
+  t,
+  {
+   physical:50,
+   mental:50
+  }
+ );
+
+ return;
+}
+  /*
+ かいめい
+ 自分のHP・メンタルを全回復
+*/
+if(m.special==='analysis'){
+
+ f.hp=f.maxHp;
+ f.mental=f.maxMental;
+
+ log(
+  `${f.name}はかいめいしてHPとメンタルを全回復した！`,
+  'heal',
+  f.side,
+  'heal',
+  statSnapshot(f)
+ );
+
+ return;
+}
+  /*
+ リン
+ 相手の物理攻撃力×0.8
+ 無制限に重複
+*/
+if(m.special==='rin'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ t.physicalBuff*=0.8;
+
+ log(
+  `${t.name}の物理攻撃力が下がった！`,
+  'debuff',
+  t.side,
+  'debuff'
+ );
+
+ return;
+}
+if(m.special==='handPiece'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ /*
+  applyDamageを通さないことで
+  攻撃補正・防御補正・防御・よける等を無視
+ */
+ directDamage(
+  t,
+  20,
+  0,
+  'ハンドピース'
+ );
+
+ return;
+}
+  /*
+ ストラックアウト
+ 10～90からランダムなダメージ。
+ 攻撃倍率・固定値加算などを完全に無視。
+*/
+if(m.special==='strikeOut'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ const damage=
+  Math.floor(
+   Math.random()*81
+  )+10;
+
+ directDamage(
+  t,
+  damage,
+  0,
+  'ストラックアウト'
+ );
+
+ return;
+}
+
+
+/*
+ できんにする
+
+ ・通常の相手 → できん付与
+ ・すでにできん → 無効
+ ・元からできんを持つみやび → 無効
+*/
+if(m.special==='giveDekin'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ if(t.traits.includes('できん')){
+
+  log(
+   `${t.name}はすでにできんになっている`
+  );
+
+  return;
+ }
+
+ t.traits.push('できん');
+
+ log(
+  `${t.name}はできんになった！`,
+  'debuff',
+  t.side,
+  'debuff'
+ );
+
+ return;
+}
+
+
+/*
+ とうきゅう
+ 50%で物理40ダメージ
+*/
+if(m.special==='pitchAttack'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ if(Math.random()<P.normal){
+
+  applyDamage(
+   f,
+   t,
+   {
+    physical:40
+   }
+  );
+
+ }else{
+
+  log(
+   `${f.name}のとうきゅうは外れた！`
+  );
+ }
+
+ return;
+}
+  if(m.special==='highTone'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ /*
+  よけるだけは有効
+ */
+ if(t.dodging){
+
+  log(
+   `${t.name}はこうおんをよけた！`
+  );
+
+  return;
+ }
+
+ /*
+  攻撃力・防御力補正を無視して
+  物理10ダメージ
+ */
+ directDamage(
+  t,
+  10,
+  0,
+  'こうおん'
+ );
+
+ return;
+}
+  if(m.special==='strangle'){
+
+ const t=targets[0];
+
+ if(!t){
+  return;
+ }
+
+ const lost=
+  Math.min(
+   1,
+   t.mp
+  );
+
+ t.mp-=lost;
+
+ /*
+  次の3回のターン開始時、
+  MP自然回復量を1に固定
+ */
+ t.mpRegenLock=3;
+
+ log(
+  `${f.name}は${t.name}をしめあげた！ MP-${lost}、3ターンMP回復量が1になった`,
+  'debuff',
+  t.side,
+  'debuff'
+ );
+
+ return;
+}
+
+if(m.special==='dodge'){
+
+ // dodging自体はターン処理開始時に
+ // すでに有効化済み
+
+ // dodging自体はターン処理開始時に
+ // すでに有効化済み
+ return;
+}
+  if(m.special==='randomMove'){
+
+ useHolgonu(
+  f,
+  targets
+ );
+
+ return;
+}
+  if(m.special==='wrapHair'){
+
+ if(f.veilBoost>=10){
+
+  log(
+   `${f.name}はこれ以上かみをまけない`
+  );
+
+  return;
+ }
+
+ f.veilBoost++;
+
+ const base=
+  f.traits.includes('むちのヴェール')
+   ?10
+   :0;
+
+ log(
+ `${f.name}はかみをまいた！ `+
+ `物理・精神軽減-${base+f.veilBoost}`,
+ 'buff',
+ f.side,
+ 'buff'
+);
+
+ return;
+}
+
+if(m.special==='halalFood'){
+
+f.hp=
+ Math.min(
+  f.maxHp,
+  f.hp+20
+ );
+
+f.halalMentalMul*=1.2;
+
+log(
+ `${f.name}はHPを20回復！ `+
+ `精神攻撃力が${f.halalMentalMul.toFixed(2)}倍になった`,
+ 'heal',
+ f.side,
+ 'heal',
+ statSnapshot(f)
+);
+
+ return;
+}
+
+  if(m.special==='parasite'){
+
+ const t=
+  targets[0];
+
+ if(!t){
+  return;
+ }
+
+ if(
+  t.traits.includes(
+   'あるつはいまー'
+  )
+ ){
+  directDamage(
+   t,
+   5,
+   5,
+   'きせい'
+  );
+
+  log(
+   `${t.name}はあるつはいまーで寄生を忘れた！`
+  );
+
+  return;
+ }
+
+ t.parasiteStacks=
+  Math.min(
+   3,
+   (t.parasiteStacks||0)+1
+  );
+
+log(
+ `${t.name}に寄生した！ `+
+ `寄生×${t.parasiteStacks}`,
+ 'debuff',
+ t.side,
+ 'debuff'
+);
+
+ return;
+}
+
+ if(m.special==='removeMask'){
+
+ const t=
+  targets[0];
+
+ if(t){
+ applyDamage(
+ f,
+ t,
+ {
+  mental:30
+ }
+);
+ }
+
+f.hp=f.maxHp;
+
+log(
+ `${f.name}はかめんをとり、HPを全回復した！`,
+ 'heal',
+ f.side,
+ 'heal',
+ statSnapshot(f)
+);
+
+ return;
+} 
+  
+ if(m.special==='gundam'){
+
+  if(f.gundam){
+   log('ガンダムはすでにいる');
+  }else{
+   f.gundam=true;
+  }
+
+  return;
+ }
+
+  if(m.special==='haruka'){
+
+ if(f.haruka){
+
+  log(
+   'はるかはすでにいる'
+  );
+
+ }else{
+
+  f.haruka=true;
+
+  log(
+   `${f.name}ははるかを設置した！`
+  );
+ }
+
+ return;
+}
+if(m.special==='remi'){
+
+ if(f.remi){
+
+  log(
+   'れみはすでにいる'
+  );
+
+ }else{
+
+  f.remi=true;
+
+  log(
+   `${f.name}はれみを設置した！`
+  );
+ }
+
+ return;
+}
+if(m.special==='rampage'){
+  f.rampage=4;
+  log(
+ `${f.name}は暴れ始めた！ 次のターンから3ターン物理攻撃が2倍になる`,
+ 'buff',
+ f.side,
+ 'buff'
+);
+  return;
+}
+
+ if(m.special==='mentalResistStack'){
+  f.mentalResistStacks=
+   Math.min(
+    4,
+    f.mentalResistStacks+1
+   );
+ }
+
+if(m.special==='verbalDot'){
+
+ const t=
+  targets[0];
+
+ if(!t){
+  return;
+ }
+
+ if(
+  t.traits.includes(
+   'あるつはいまー'
+  )
+ ){
+  directDamage(
+   t,
+   0,
+   5,
+   'ばとう'
+  );
+
+  log(
+   `${t.name}はあるつはいまーで罵倒を忘れた！`
+  );
+
+  return;
+ }
+
+ t.verbalDot=
+  Math.min(
+   6,
+   t.verbalDot+1
+  );
+
+ return;
+}
+
+ if(m.special==='entangle'){
+
+  if(targets[0]){
+    targets[0].entangled=2;
+
+   log(
+ `${targets[0].name}にからみついた！`,
+ 'debuff',
+ targets[0].side,
+ 'debuff'
+);
+  }
+
+  return;
+}
+
+ if(m.special==='stealMp'){
+
+  const t=
+   targets[0];
+
+  if(!t){
+   return;
+  }
+
+  const q=
+   Math.min(1,t.mp);
+
+  t.mp-=q;
+
+  f.mp=
+   Math.min(
+    f.maxMp,
+    f.mp+q
+   );
+
+  return;
+ }
+
+ if(m.special==='invest'){
+
+  if(f.mp<=0){
+   return log(
+    'MPが0以下なので投資できない'
+   );
+  }
+
+  const ok=
+   Math.random()<P.normal;
+
+  if(ok){
+   f.mp=
+    Math.min(
+     f.maxMp,
+     f.mp+5
+    );
+
+   log('投資成功');
+  }else{
+   f.mp=
+    Math.max(
+     0,
+     f.mp-5
+    );
+
+   log('投資失敗');
+  }
+
+  return;
+ }
+
+ if(m.special==='gamble'){
+
+  const ok=
+   Math.random()<0.5;
+
+  let dmg=
+   ok?50:0;
+
+  if(
+ f.traits.includes('ギャンブラー')
+){
+ if(ok){
+
+  dmg*=1.25;
+
+ }else{
+
+  const penalty=5;
+
+  // MPが足りない分
+  const shortage=
+   Math.max(
+    0,
+    penalty-f.mp
+   );
+
+  // MPは最低0
+  f.mp=
+   Math.max(
+    0,
+    f.mp-penalty
+   );
+
+  // 不足MP×5の精神ダメージ
+  if(shortage>0){
+
+   directDamage(
+    f,
+    0,
+    shortage*5,
+    'ギャンブルMP不足'
+   );
+  }
+ }
+}
+
+  if(ok){
+   applyDamage(
+    f,
+    targets[0],
+    {physical:dmg}
+   );
+  }else{
+   log('ギャンブル失敗');
+  }
+
+  return;
+ }
+
+ if(m.special==='affair'){
+
+  const t=
+   targets[0];
+
+  if(
+   t &&
+   t.races.includes('おんな')
+  ){
+   applyDamage(
+    f,
+    t,
+    {mental:50}
+   );
+  }
+
+  if(Math.random()<P.normal){
+   directDamage(
+    f,
+    20,
+    0,
+    'うわき反動'
+   );
+  }
+
+  return;
+ }
+
+ if(m.special==='seiri'){
+
+  const t=
+   targets[0];
+
+  if(!t){
+   return;
+  }
+
+  if(
+   t.traits.includes('じんだいのかこい')
+  ){
+   return log(
+    'せいりは無効化された'
+   );
+  }
+
+  const r=
+   Math.random();
+
+  if(r<1/3){
+   directDamage(
+    t,
+    35,
+    0,
+    'せいり'
+   );
+  }else if(r<2/3){
+   directDamage(
+    t,
+    0,
+    35,
+    'せいり'
+   );
+  }else{
+   directDamage(
+    t,
+    35,
+    35,
+    'せいり'
+   );
+  }
+
+  return;
+ }
+
+if(m.special==='lost'){
+
+  if(
+   targets[0] &&
+   Math.random()<P.normal
+  ){
+   targets[0].mentalBuff*=1.2;
+
+  log(
+ `${targets[0].name}の精神攻撃力が1.2倍になった！`,
+ 'buff',
+ targets[0].side,
+ 'buff'
+);
+  }
+
+  return;
+}
+ if(m.special==='poop'){
+
+  for(const t of allActive()){
+   directDamage(
+    t,
+    0,
+    20,
+    'だっぷん'
+   );
+  }
+
+  const t=
+   targets[0];
+
+  if(t){
+   applyDamage(
+    f,
+    t,
+    {physical:20}
+   );
+  }
+
+  return;
+ }
+
+ if(m.special==='swim'){
+  f.swimming=2;
+  return;
+ }
+
+if(m.allTargets){
+
+ livingEnemies(f)
+  .forEach(
+   t=>applyDamage(
+    f,
+    t,
+    m
+   )
+  );
+
+ }else if(m.multi){
+
+  for(const hit of m.multi){
+
+   applyDamage(
+    f,
+    targets[0],
+    {
+     physical:hit,
+     tags:m.tags
     }
+   );
+  }
+
+ }else if(
+  (m.physical||m.mental) &&
+  targets[0]
+ ){
+  applyDamage(
+   f,
+   targets[0],
+   m
+  );
+ }
+
+ if(
+  m.special==='elderDouble' &&
+  targets[0]?.races.includes('ろうじん')
+ ){
+  applyDamage(
+   f,
+   targets[0],
+   {
+    physical:m.physical||0,
+    mental:m.mental||0
+   }
+  );
+ }
+
+ if(
+  m.special==='wakeMp' &&
+  targets[0]
+ ){
+  targets[0].mp=
+   Math.min(
+    targets[0].maxMp,
+    targets[0].mp+2
+   );
+ }
+
+if(m.healHp){
+
+ f.hp=
+  Math.min(
+   f.maxHp,
+   f.hp+m.healHp
+  );
+
+ log(
+  `${f.name}のHPが${m.healHp}回復した！`,
+  'heal',
+  f.side,
+  'heal',
+  statSnapshot(f)
+ );
+}
+
+if(m.healMental){
+
+ f.mental=
+  Math.min(
+   f.maxMental,
+   f.mental+m.healMental
+  );
+
+ log(
+  `${f.name}の精神が${m.healMental}回復した！`,
+  'heal',
+  f.side,
+  'heal',
+  statSnapshot(f)
+ );
+}/*
+ やすむ：感染したむしばを治療
+ ゆうま本人のむしばは治らない
+*/
+if(
+ n==='やすむ' &&
+ f.name!=='ゆうま' &&
+ f.traits.includes('むしば')
+){
+
+ f.traits=
+  f.traits.filter(
+   trait=>trait!=='むしば'
+  );
+
+ log(
+  `${f.name}のむしばが治った！`,
+  'heal',
+  f.side,
+  'heal'
+ );
+}
+ if(m.mpGain){
+  f.mp=
+   Math.min(
+    f.maxMp,
+    f.mp+m.mpGain
+   );
+}
+
+ if(m.selfHp){
+  f.hp+=m.selfHp;
+log(
+  m.selfHp<0
+   ?`${f.name}は反動でHPを${Math.abs(m.selfHp)}失った！`
+   :`${f.name}のHPが${m.selfHp}回復した！`,
+  m.selfHp<0?'damage':'heal',
+  f.side,
+  m.selfHp<0?'damage':'heal',
+  statSnapshot(f)
+ ); }
+
+ if(m.selfMental){
+
+ f.mental+=m.selfMental;
+
+ log(
+  m.selfMental<0
+   ?`${f.name}は反動で精神を${Math.abs(m.selfMental)}失った！`
+   :`${f.name}の精神が${m.selfMental}回復した！`,
+  m.selfMental<0?'damage':'heal',
+  f.side,
+  m.selfMental<0?'damage':'heal',
+  statSnapshot(f)
+ );
+}
+
+if(m.randomMentalDrink){
+
+ const change=
+  Math.random()<.5
+   ?5
+   :-5;
+
+ f.mental+=change;
+
+ log(
+  change>0
+   ?`${f.name}の精神が5回復した！`
+   :`${f.name}は精神を5失った！`,
+  change>0?'heal':'damage',
+  f.side,
+  change>0?'heal':'damage',
+  statSnapshot(f)
+ );
+}
+
+if(m.buffPhysicalNext){
+
+ f.physicalBuff*=
+  m.buffPhysicalNext;
+
+ log(
+  `${f.name}の物理攻撃力が上がった！`,
+  'buff',
+  f.side,
+  'buff'
+ );
+}
+if(m.buffMentalNext){
+
+ f.mentalBuff*=
+  m.buffMentalNext;
+
+ log(
+  `${f.name}の精神攻撃力が上がった！`,
+  'buff',
+  f.side,
+  'buff'
+ );
+}
+
+if(
+ m.debuffEnemyMentalAtk &&
+ targets[0]
+){
+
+ targets[0].nextM*=
+  m.debuffEnemyMentalAtk;
+
+ log(
+  `${targets[0].name}の精神攻撃力が下がった！`,
+  'debuff',
+  targets[0].side,
+  'debuff'
+ );
+}
+
+/* executeMoveEffect終了 */
+}
+
+function effectiveCost(f,c){
+
+ if(
+  f.traits.includes('どくぜつ')
+ ){
+  return Math.max(
+   0,
+   c-1
+  );
+ }
+
+ return c;
+}
+
+function applyDamage(
+ src,
+ t,
+ m,
+ passive=false
+){
+
+ if(!t||!t.alive){
+  return;
+ }
+  /*
+ パルティアンショット
+
+ そのターン中、
+ 敵から受ける物理攻撃を確定回避。
+
+ 精神部分は回避しない。
+*/
+if(
+ t.parthianDodging &&
+ !passive &&
+ m.physical
+){
+
+ if(m.mental){
+
+  log(
+   `${t.name}はパルティアンショットで物理攻撃を回避した！`
+  );
+
+  m={
+   ...m,
+   physical:0
+  };
+
+ }else{
+
+  log(
+   `${t.name}はパルティアンショットで物理攻撃を回避した！`
+  );
+
+  return;
+ }
+}
+
+ if(
+  t.dodging &&
+  !passive &&
+  (
+   m.physical ||
+   m.mental
+  )
+ ){
+  log(
+   `${t.name}は攻撃をよけた！`
+  );
+
+  animateF(
+   t,
+   'flash'
+  );
+
+  return;
+ }
+
+ if(
+  (
+   t.traits.includes('えんきんほう') ||
+   t.traits.includes('おやのななひかり')
+  ) &&
+  m.physical &&
+  Math.random()<P.evasion
+ ){
+
+  log(
+   `${t.name}は物理攻撃を回避`
+  );
+
+  m={
+   ...m,
+   physical:0
+  };
+ }
+
+ let p=m.physical||0;
+ let q=m.mental||0;
+
+ const tags=
+  m.tags||[];
+   /*
+  レイシスト：
+  デブへの物理・精神攻撃×1.2
+ */
+ if(
+  src.traits.includes('レイシスト') &&
+  t.races.includes('デブ')
+ ){
+  p*=1.2;
+  q*=1.2;
+ }
+
+ if(p){
+
+ p*=src.nextP||1;
+p*=src.physicalBuff||1;
+p*=src.growthP||1;
+p*=src.dualPhysical||1;
+
+/*
+ たいりくのはしゃ
+ 最大4重複
+*/
+if(
+ src.traits.includes('たいりくのはしゃ')
+){
+ p*=
+  Math.pow(
+   1.2,
+   Math.min(
+    4,
+    src.continentalStacks||0
+   )
+  );
+}
+  if(
+   src.traits.includes('うんどうおんち')
+  ){
+   p*=.7;
+  }
+
+  if(
+   src.traits.includes('きょたい')
+  ){
+   p*=1.2;
+  }
+
+  if(
+   src.traits.includes('きけんしそう')
+  ){
+
+   p*=1.1;
+
+   if(
+    t.races.includes('もじゃもじゃ')
+   ){
+    p/=1.1;
+    p*=1.2;
+   }
+
+   if(
+    t.races.includes('デブ')
+   ){
+    p/=1.1;
+    p*=1.4;
+   }
+  }
+
+  if(
+   src.traits.includes('かりめん')
+  ){
+   p+=20;
+  }
+
+  if(
+   src.traits.includes('あかいろ') &&
+   tags.includes('いろ')
+  ){
+   p*=1.2;
+  }
+
+  if(
+   src.traits.includes('あるくTDL') &&
+   tags.includes('おと')
+  ){
+   p*=1.5;
+  }
+
+  if(
+   src.traits.includes('ユーチューバー') &&
+   (
+    tags.includes('いろ') ||
+    tags.includes('おと')
+   )
+  ){
+   p*=1.2;
+  }
+
+   if(
+ src.haruka &&
+ tags.includes('おと')
+){
+ p*=2;
+}
+   
+  if(
+   src.traits.includes('じゅんあい') &&
+   t.traits.includes('うわきしょう')
+  ){
+   p*=1.5;
+  }
+
+  if(src.rampage>0){
+   p*=2;
+  }
+   /*
+ たいりくのはしゃ
+
+ ミックスに対する物理攻撃は
+ 倍率計算後に固定+10
+*/
+if(
+ src.traits.includes('たいりくのはしゃ') &&
+ t.races.includes('ミックス')
+){
+ p+=10;
+}
+ }
+
+ if(q){
+
+  q*=src.nextM||1;
+  q*=src.mentalBuff||1;
+  q*=src.growthM||1;
+  q*=src.halalMentalMul||1;
+   q*=src.dualMental||1;
+
+  if(
+   src.traits.includes('ふきんしん')
+  ){
+   q*=1.3;
+  }
+
+  if(
+   src.traits.includes('れいしょうけい')
+  ){
+   q*=1.1;
+  }
+
+  if(
+   src.traits.includes('ぼうず')
+  ){
+   q*=.75;
+  }
+
+  if(
+   src.traits.includes('どくぜつ')
+  ){
+
+   q*=
+    t.races.some(
+     r=>
+      [
+       'fラン',
+       'ろうにん',
+       'ろうにんせい',
+       'たんきだいがく'
+      ].includes(r)
+    )
+     ?1.5
+     :1.1;
+  }
+
+  if(
+   src.traits.includes('じゅんあい') &&
+   t.traits.includes('うわきしょう')
+  ){
+   q*=1.5;
+  }
+
+  if(
+   src.traits.includes('ユーチューバー') &&
+   (
+    tags.includes('いろ') ||
+    tags.includes('おと')
+   )
+  ){
+   q*=1.2;
+  }
+ }
+
+  if(
+ src.haruka &&
+ tags.includes('おと')
+){
+ q*=2;
+}
+
+ if(
+  tags.includes('いろ') &&
+  t.traits.includes('ひかりのヴェール')
+ ){
+  p*=.5;
+  q*=.5;
+ }
+
+ if(
+  tags.includes('いろ') &&
+  t.traits.includes('しきもう')
+ ){
+  p=0;
+  q=0;
+ }
+
+ if(
+  tags.includes('いろ') &&
+  t.traits.includes('しらが')
+ ){
+  p*=.8;
+  q*=.8;
+ }
+
+ if(
+  tags.includes('いろ') &&
+  t.traits.includes('くろいろ')
+ ){
+  p*=1.5;
+  q*=1.5;
+
+  directDamage(
+   src,
+   10,
+   0,
+   'くろいろ反撃'
+  );
+ }
+
+ if(
+  t.traits.includes('ボケ') &&
+  (
+   tags.includes('いろ') ||
+   tags.includes('おと') ||
+   tags.includes('におい')
+  )
+ ){
+  p*=.75;
+  q*=.75;
+ }
+
+ if(
+  t.traits.includes('無神経')
+ ){
+  p*=.8;
+ }
+
+ if(
+  t.traits.includes('きょたい')
+ ){
+  p*=1.2;
+ }
+
+ if(
+  t.traits.includes('めめしい')
+ ){
+  q*=1.2;
+ }
+
+ if(
+  t.traits.includes('わがまま')
+ ){
+  q*=.5;
+ }
+
+ if(
+  t.traits.includes('なぞのこうい') &&
+  src.races.includes('おんな')
+ ){
+  q*=1.2;
+ }
+
+ if(
+  t.traits.includes('いぬけい') &&
+  src.races.includes('おんな')
+ ){
+  p*=.5;
+ }
+
+ if(
+  t.traits.includes('びびり') &&
+  (
+   tags.includes('しんれい') ||
+   tags.includes('びっくり')
+  )
+ ){
+  p*=1.5;
+  q*=1.5;
+ }
+
+ if(t.mentalResistStacks){
+
+  q*=
+   Math.pow(
+    .7,
+    t.mentalResistStacks
+   );
+ }
+
+ if(
+  t.traits.includes('しきもう') &&
+  p &&
+  Math.random()<P.normal
+ ){
+  p*=1.2;
+ }
+
+ if(
+  t.traits.includes('まゆなし')
+ ){
+  p*=.9;
+ }
+
+ let ignoranceReduction=
+  t.traits.includes('むちのヴェール')
+   ?10
+   :0;
+
+ ignoranceReduction+=
+  t.veilBoost||0;
+
+ if(ignoranceReduction>0){
+
+  p=
+   Math.max(
+    0,
+    p-ignoranceReduction
+   );
+
+  q=
+   Math.max(
+    0,
+    q-ignoranceReduction
+   );
+ }
+
+ p=
+  Math.round(
+   Math.max(
+    0,
+    p-(t.guard||0)
+   )
+  );
+
+ q=
+  Math.round(
+   Math.max(
+    0,
+    q-(t.guard||0)
+   )
+  );
+
+/*
+ マジレス
+ 物理・精神それぞれの被ダメージ-5
+*/
+if(t.traits.includes('マジレス')){
+ p=Math.max(0,p-5);
+ q=Math.max(0,q-5);
+}
+
+directDamage(
+  t,
+  p,
+  q,
+  src.name
+);
+
+if(!(p||q)){
+
+ animateF(
+  t,
+  'flash'
+ );
+}
+ if(
+  src.traits.includes('かりめん') &&
+  Math.random()<P.accident
+ ){
+  directDamage(
+   src,
+   20,
+   0,
+   'かりめん反動'
+  );
+ }
+}
+
+  function statSnapshot(f){
+
+ return {
+  hp:Math.max(0,f.hp),
+  mental:Math.max(0,f.mental),
+  maxHp:f.maxHp,
+  maxMental:f.maxMental,
+
+  // 3vs3でも「誰のゲージか」を固定する
+  side:f.side,
+  index:f.index
+ };
+}
+
+function changeStats(
+ f,
+ hpChange=0,
+ mentalChange=0,
+ message='',
+ effect=null,
+ sound=null
+){
+
+ f.hp=
+  Math.min(
+   f.maxHp,
+   f.hp+hpChange
+  );
+
+ f.mental=
+  Math.min(
+   f.maxMental,
+   f.mental+mentalChange
+  );
+
+ if(message){
+
+  log(
+   message,
+   effect,
+   f.side,
+   sound,
+   statSnapshot(f)
+  );
+ }
+}
+function directDamage(
+ t,
+ p,
+ q,
+ why
+){
+
+ const hpDamage=
+  Math.round(p||0);
+
+ const mentalDamage=
+  Math.round(q||0);
+
+ t.hp-=hpDamage;
+ t.mental-=mentalDamage;
+
+ /*
+  このダメージが入った
+  「直後」の値を保存する。
+
+  重要：
+  後で現在値を読むのではなく、
+  この瞬間のHP・精神をログに記録する。
+ */
+ const displayHpAfter=
+  Math.max(
+   0,
+   t.hp
+  );
+
+ const displayMentalAfter=
+  Math.max(
+   0,
+   t.mental
+  );
+
+ if(
+  (hpDamage||mentalDamage) &&
+  why
+ ){
+
+ log(
+ `${t.name}に`+
+ `${hpDamage
+   ?` HP-${hpDamage}`
+   :''
+ }`+
+ `${mentalDamage
+   ?` 精神-${mentalDamage}`
+   :''
+ }`+
+ ` (${why})`,
+ 'damage',
+ t.side,
+ 'damage',
+{
+  hp:displayHpAfter,
+  mental:displayMentalAfter,
+  maxHp:t.maxHp,
+  maxMental:t.maxMental,
+
+  // ダメージを受けた本人を記録
+  side:t.side,
+  index:t.index
+}
+);
+ }
+}
+
+function animateF(f,type){
+
+ const e=
+  document.getElementById(
+   'fighter-'+f.side
+  );
+
+ if(!e){
+  return;
+ }
+
+ const map={
+  damage:'effect-damage',
+  buff:'effect-buff',
+  debuff:'effect-debuff',
+  heal:'effect-heal',
+
+  flash:'effect-buff',
+  shake:'effect-damage'
+ };
+
+ const cl=
+  map[type]||type;
+
+ /*
+  前の4色エフェクトを全部消す。
+  同じキャラに連続でダメージなどが来ても
+  毎回アニメーションを最初から再生できる。
+ */
+ e.classList.remove(
+  'effect-damage',
+  'effect-buff',
+  'effect-debuff',
+  'effect-heal'
+ );
+
+ void e.offsetWidth;
+
+ e.classList.add(cl);
+
+ setTimeout(()=>{
+
+  /*
+   renderBattle()でDOMが作り直されている
+   可能性があるので、現在の要素を取り直す
+  */
+  const current=
+   document.getElementById(
+    'fighter-'+f.side
+   );
+
+  if(current){
+   current.classList.remove(cl);
+  }
+
+ },600);
+}
+function syncDisplayedStats(){
+
+ const b=
+  appState.battle;
+
+ if(!b){
+  return;
+ }
+
+ for(const team of b.teams){
+
+  for(const f of team){
+
+   f.displayHp=
+    f.hp;
+
+   f.displayMental=
+    f.mental;
+  }
+ }
+
+ renderBattle();
+}
+function endTurn(){
+
+ const b=
+  appState.battle;
+
+ if(b.finished){
+  return;
+ }
+
+ for(const f of allActive()){
+
+if(f.gundam){
+
+ const t=
+  randomLivingEnemy(f);
+
+ if(t){
+
+  applyDamage(
+   f,
+   t,
+   {physical:10}
+  );
+ }
+}
+   if(f.remi){
+
+ const t=
+  randomLivingEnemy(f);
+
+ if(t){
+
+  /*
+   れみ自身による精神15なので
+   いろは本人の攻撃補正は使用しない
+  */
+  directDamage(
+   t,
+   0,
+   15,
+   'れみ'
+  );
+ }
+}
+
+  if(f.swimming){
+
+   f.swimming--;
+
+   if(f.swimming===0){
+
+   const t=
+ randomLivingEnemy(f);
+
+if(t){
+
+ applyDamage(
+  f,
+  t,
+  {physical:40}
+ );
+}
+   }
+  }
+
+   if(f.rampage>0){
+   f.rampage--;
+  }
+
+  if(f.entangled>0){
+   f.entangled--;
+  }
+
+  f.guard=0;
+f.dodging=false;
+f.parthianDodging=false;
+f.nextP=1;
+f.nextM=1;
+
+f.plannedAction=null;
+ }
+
+
+checkDeaths();
+
+if(b.finished){
+ return;
+}
+
+b.turn++;
+beginTurn();
+}
+
+function checkDeaths(){
+
+ const b=
+  appState.battle;
+
+ for(
+  let s=0;
+  s<b.teams.length;
+  s++
+ ){
+
+  const f=
+   activeF(s);
+   
+  applyUniqueFaith(f);
+
+  if(
+   f &&
+   f.alive &&
+   (
+    f.hp<=0 ||
+    f.mental<=0
+   )
+  ){
+
+   f.alive=false;
+   f.hp=Math.max(0,f.hp);
+   f.mental=Math.max(0,f.mental);
+   
+
+   if(f.hp<=0){
+
+ log(
+  `${f.name}の体力は0になった！`,
+  'damage',
+  f.side,
+  null
+ );
+}
+
+if(f.mental<=0){
+
+ log(
+  `${f.name}の精神は0になった！`,
+  'damage',
+  f.side,
+  null
+ );
+}
+
+log(
+ `${f.name}は倒れた。`
+);
+
+   if(f.gundam){
+    f.gundam=false;
+   }
+
+  if(f.haruka){
+ f.haruka=false;
+}
+      if(f.remi){
+   f.remi=false;
+  }
+
+   if(b.mode==='team3'){
+
+    const ni=
+     b.teams[s]
+      .findIndex(
+       x=>x.alive
+      );
+
+    if(ni>=0){
+
+     b.active[s]=ni;
+
+     log(
+      `${b.teams[s][ni].name}が場に出た`
+     );
+    }
+   }
+  }
+ }
+
+ if(
+  appState.connection==='friend'
+ ){
+
+  const aliveSides=
+   b.teams
+    .map(
+     (t,s)=>
+      t.some(x=>x.alive)
+       ?s
+       :-1
+    )
+    .filter(
+     s=>s>=0
+    );
+
+  if(aliveSides.length<=1){
+
+   const winner=
+    aliveSides.length
+     ?b.teams[aliveSides[0]][0].ownerId
+     :null;
+
+   finish(
+    winner===onlinePlayerId
+     ?'勝利'
+     :'敗北',
+    winner
+   );
+  }
+
+ }else if(
+  b.mode==='ffa4'
+ ){
+
+  const alive=
+   allActive()
+    .filter(
+     x=>x.alive
+    );
+
+  if(alive.length<=1){
+
+   finish(
+    alive[0]?.side===0
+     ?'勝利'
+     :'敗北'
+   );
+  }
+
+ }else{
+
+  const a=
+   b.teams[0]
+    .some(
+     x=>x.alive
+    );
+
+  const c=
+   b.teams[1]
+    .some(
+     x=>x.alive
+    );
+
+  if(!a||!c){
+
+   finish(
+    a
+     ?'勝利'
+     :'敗北'
+   );
+  }
+ }
+}
+
+function finish(
+ txt,
+ winnerOwnerId=null
+){
+
+ const b=
+  appState.battle;
+
+ if(b.finished){
+  return;
+ }
+
+ b.finished=true;
+
+ b.winnerOwnerId=
+  winnerOwnerId;
+
+ /*
+  ここではBGMを止めない。
+  「倒れた。」をクリックするまで継続。
+ */
+ pendingBattleResult={
+  text:txt,
+  winnerOwnerId
+ };
+
+ renderBattle();
+}
+function applyUniqueFaith(f){
+
+ if(
+  !f ||
+  !f.alive ||
+  !f.traits.includes(
+   'ゆいいつしんのかご'
+  )
+ ){
+  return;
+ }
+
+ if(
+  f.hp<=0 &&
+  !f.uniqueHpUsed
+ ){
+  f.hp=1;
+  f.uniqueHpUsed=true;
+
+ log(
+ `${f.name}はゆいいつしんのかごでHP1で耐えた！`,
+ 'heal',
+ f.side,
+ 'heal',
+ statSnapshot(f)
+);
+ }
+
+ if(
+  f.mental<=0 &&
+  !f.uniqueMentalUsed
+ ){
+  f.mental=1;
+  f.uniqueMentalUsed=true;
+
+  log(
+ `${f.name}はゆいいつしんのかごで精神1で耐えた！`,
+ 'heal',
+ f.side,
+ 'heal',
+ statSnapshot(f)
+);
+ }
+}
+
+function showOnlineResult(){
+
+ const b=
+  appState.battle;
+
+ document.getElementById('resultText').textContent=
+  b.winnerOwnerId===onlinePlayerId
+   ?'勝利'
+   :'敗北';
+
+ show('result');
+}
+
+function playBattleSound(name){
+
+ const src=
+  battleAssets.sounds[name];
+
+ if(!src){
+  console.error(
+   '効果音が登録されていません:',
+   name
+  );
+  return;
+ }
+
+ const audio=
+  new Audio(src);
+
+ audio.volume=0.9;
+ audio.preload='auto';
+
+ audio.play().catch(err=>{
+  console.error(
+   '効果音の再生に失敗:',
+   name,
+   src,
+   err
+  );
+ });
+}
+  function playReadyAndWait(){
+
+ return new Promise(resolve=>{
+
+  const src=
+   battleAssets.sounds.ready;
+
+  if(!src){
+   resolve();
+   return;
+  }
+
+  const audio=
+   new Audio(src);
+
+  audio.volume=0.6;
+  audio.preload='auto';
+
+  let finished=false;
+
+  const done=()=>{
+
+   if(finished){
+    return;
+   }
+
+   finished=true;
+   resolve();
+  };
+
+  // ready.mp3が最後まで鳴ったら続行
+  audio.addEventListener(
+   'ended',
+   done,
+   {once:true}
+  );
+
+  // エラー時はゲームを止めず続行
+  audio.addEventListener(
+   'error',
+   done,
+   {once:true}
+  );
+
+  audio.play().catch(err=>{
+
+   console.error(
+    'ready効果音の再生に失敗:',
+    err
+   );
+
+   done();
   });
+
+ });
+}
+function sfx(freq=330,dur=.05){
+
+ try{
+
+  const A=
+   window.AudioContext||
+   window.webkitAudioContext;
+
+  const c=
+   sfx.ctx||
+   (
+    sfx.ctx=
+     new A()
+   );
+
+  const o=
+   c.createOscillator();
+
+  const g=
+   c.createGain();
+
+  o.frequency.value=
+   freq;
+
+  g.gain.value=
+   .025;
+
+  o.connect(g);
+  g.connect(
+   c.destination
+  );
+
+  o.start();
+
+  g.gain.exponentialRampToValueAtTime(
+   .0001,
+   c.currentTime+dur
+  );
+
+  o.stop(
+   c.currentTime+dur
+  );
+
+ }catch(e){}
 }
 
-function log(msg) {
-  const l = document.getElementById('battle-log');
-  l.innerHTML += `<div>${msg}</div>`;
-  l.scrollTop = l.scrollHeight;
+function log(
+ s,
+ effect=null,
+ side=null,
+ sound=null,
+ displayStats=null
+){
+
+ const b=
+  appState.battle;
+
+ if(!b){
+  return;
+ }
+
+ b.log.push({
+  text:s,
+  effect,
+  side,
+  sound,
+  displayStats
+ });
+
+ renderBattle();
+}
+function retire(){
+
+ if(
+  appState.connection==='friend'
+ ){
+  return alert(
+   '友人戦では退散できません。'
+  );
+ }
+
+  stopBattleBgm();
+ show('home');
 }
 
-// Tooltip Management
-function showTooltip(e, html) {
-  const tt = document.getElementById('tooltip');
-  tt.innerHTML = html;
-  tt.style.display = 'block';
-  tt.style.left = e.pageX + 10 + 'px';
-  tt.style.top = e.pageY + 10 + 'px';
+function rematch(){
+
+ if(
+  appState.connection==='friend'
+ ){
+  return alert(
+   'オンライン再戦は現在、部屋を作り直してください。'
+  );
+ }
+
+ startBattle();
 }
-function hideTooltip() {
-  document.getElementById('tooltip').style.display = 'none';
+
+function backToSelect(){
+ renderSelection();
+ show('select');
 }
+ /* =========================
+   ボタン効果音
+========================= */
+
+document.addEventListener('click', e=>{
+
+ const btn=
+  e.target.closest('.btn');
+
+ if(
+  !btn ||
+  btn.disabled
+ ){
+  return;
+ }
+
+ /*
+  startBtnは
+  startBattle()内で鳴らす
+ */
+ if(btn.id==='startBtn'){
+  return;
+ }
+
+ playButtonSe();
+
+});
 </script>
 </body>
 </html>
